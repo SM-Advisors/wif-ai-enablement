@@ -6,14 +6,14 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
-import Curriculum from "./pages/Curriculum";
+import ProgramOverview from "./pages/ProgramOverview";
+import SessionDetail from "./pages/SessionDetail";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
-// Requires auth — redirects to /login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
   if (isLoading) {
@@ -26,7 +26,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return user ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-// Login page — redirects to /curriculum if already logged in
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
   if (isLoading) {
@@ -36,7 +35,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  return user ? <Navigate to="/curriculum" replace /> : <>{children}</>;
+  return user ? <Navigate to="/program" replace /> : <>{children}</>;
 };
 
 const App = () => (
@@ -49,8 +48,11 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
-            <Route path="/curriculum" element={<ProtectedRoute><Curriculum /></ProtectedRoute>} />
+            <Route path="/program" element={<ProtectedRoute><ProgramOverview /></ProtectedRoute>} />
+            <Route path="/session/:number" element={<ProtectedRoute><SessionDetail /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+            {/* Legacy redirect */}
+            <Route path="/curriculum" element={<Navigate to="/program" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
