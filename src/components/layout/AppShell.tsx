@@ -30,6 +30,26 @@ const AppShell = ({ children }: AppShellProps) => {
 
   const isAdminRoute = location.pathname === "/admin";
 
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!isTrainer) return;
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("is_read", false);
+      setUnreadCount(count ?? 0);
+    };
+    fetchUnread();
+    const channel = supabase
+      .channel("notifications-count")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => fetchUnread())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, () => fetchUnread())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isTrainer]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
