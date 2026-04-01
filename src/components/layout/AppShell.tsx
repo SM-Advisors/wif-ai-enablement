@@ -87,7 +87,7 @@ const AppShell = ({ children }: AppShellProps) => {
                 <Button
                   variant={isAdminRoute ? "default" : "outline"}
                   size="sm"
-                  className={`gap-2 ${
+                  className={`gap-2 relative ${
                     isAdminRoute
                       ? "bg-slate-800 hover:bg-slate-900 text-white"
                       : "border-slate-300 text-slate-600 hover:bg-slate-50"
@@ -95,6 +95,11 @@ const AppShell = ({ children }: AppShellProps) => {
                 >
                   <Shield className="h-4 w-4" />
                   <span className="hidden sm:inline">{isAdminRoute ? "Exit Admin" : "Admin Panel"}</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
                 </Button>
               </Link>
             )}
