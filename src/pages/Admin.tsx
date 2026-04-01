@@ -453,37 +453,82 @@ const SessionStatusAdmin = () => {
 /* ─── Users Admin ─── */
 const UsersAdmin = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase.from("profiles").select("*").order("created_at");
-      if (data) setProfiles(data as Profile[]);
-      setIsLoading(false);
-    };
-    fetch();
-  }, []);
+  const fetchData = async () => {
+    const [profRes, notifRes] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("notifications").select("*").eq("type", "new_signup").order("created_at", { ascending: false }).limit(20),
+    ]);
+    if (profRes.data) setProfiles(profRes.data as Profile[]);
+    if (notifRes.data) setNotifications(notifRes.data);
+    setIsLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const markAllRead = async () => {
+    await supabase.from("notifications").update({ is_read: true }).eq("is_read", false);
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+  };
 
   if (isLoading) return <Skeleton className="h-48 w-full" />;
 
+  const unreadNotifs = notifications.filter((n) => !n.is_read);
+
   return (
-    <div className="grid gap-3">
-      {profiles.map((p) => (
-        <Card key={p.id}>
-          <CardContent className="flex items-center justify-between py-4">
-            <div>
-              <p className="font-medium">{p.full_name || "No name"}</p>
-              <p className="text-xs text-muted-foreground text-slate-500">User ID: {p.id.slice(0, 8)}</p>
-            </div>
-            <Badge variant={p.role === "trainer" ? "default" : "secondary"} className={p.role === "trainer" ? "bg-orange-600 hover:bg-orange-700" : ""}>
-              {p.role === "trainer" ? "Trainer" : "Client"}
-            </Badge>
+    <div className="space-y-6">
+      {/* Notifications */}
+      {unreadNotifs.length > 0 && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Bell className="h-4 w-4 text-orange-600" />
+              New Signups ({unreadNotifs.length})
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={markAllRead} className="text-xs text-orange-600 hover:text-orange-700">
+              Mark all read
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {unreadNotifs.map((n) => (
+              <div key={n.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-orange-100">
+                <div>
+                  <p className="text-sm font-medium">{n.message}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString()}</p>
+                </div>
+                <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">New</Badge>
+              </div>
+            ))}
           </CardContent>
         </Card>
-      ))}
-      {profiles.length === 0 && (
-        <p className="text-sm text-muted-foreground">No users found.</p>
       )}
+
+      {/* All Users */}
+      <div>
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">All Users ({profiles.length})</h3>
+        <div className="grid gap-3">
+          {profiles.map((p) => (
+            <Card key={p.id}>
+              <CardContent className="flex items-center justify-between py-4">
+                <div>
+                  <p className="font-medium">{p.full_name || "No name"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Joined {new Date(p.created_at).toLocaleDateString()} · ID: {p.id.slice(0, 8)}
+                  </p>
+                </div>
+                <Badge variant={p.role === "trainer" ? "default" : "secondary"} className={p.role === "trainer" ? "bg-orange-600 hover:bg-orange-700" : ""}>
+                  {p.role === "trainer" ? "Trainer" : "Client"}
+                </Badge>
+              </CardContent>
+            </Card>
+          ))}
+          {profiles.length === 0 && (
+            <p className="text-sm text-muted-foreground">No users found.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
