@@ -1,0 +1,507 @@
+import { useEffect, useState, useRef, useCallback } from "react";
+import { Navigate } from "react-router-dom";
+import AppShell from "@/components/layout/AppShell";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import RichTextEditor from "@/components/curriculum/RichTextEditor";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  MessageSquare,
+  Users,
+  Settings,
+  Upload,
+  Link as LinkIcon,
+  Plus,
+  X,
+  Loader2,
+  FileText,
+  ExternalLink,
+  Image,
+  Save,
+} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+type SessionStatus = "not_started" | "in_progress" | "complete" | "locked";
+
+interface Session {
+  id: string;
+  session_number: number;
+  date: string;
+  duration_minutes: number;
+  focus: string;
+}
+
+interface SessionNote {
+  id: string;
+  session_id: string;
+  status: SessionStatus;
+}
+
+interface Profile {
+  id: string;
+  full_name: string | null;
+  role: string;
+  org_name: string | null;
+  created_at: string;
+}
+
+interface FileAttachment {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_type: string;
+  file_size: number | null;
+}
+
+interface LinkItem {
+  id: string;
+  title: string;
+  url: string;
+}
+
+const Admin = () => {
+  const { isTrainer, isLoading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <AppShell>
+        <div className="container max-w-5xl py-8 px-4">
+          <Skeleton className="h-10 w-1/3 mb-6" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!isTrainer) return <Navigate to="/" replace />;
+
+  return (
+    <AppShell>
+      <div className="container max-w-5xl py-6 px-4">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6">Admin Dashboard</h1>
+        <Tabs defaultValue="notes" className="w-full">
+          <TabsList className="w-full justify-start mb-6">
+            <TabsTrigger value="notes" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Instructor Notes
+            </TabsTrigger>
+            <TabsTrigger value="sessions" className="gap-2">
+              <Settings className="h-4 w-4" />
+              Session Status
+            </TabsTrigger>
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="notes">
+            <InstructorNotesAdmin />
+          </TabsContent>
+          <TabsContent value="sessions">
+            <SessionStatusAdmin />
+          </TabsContent>
+          <TabsContent value="users">
+            <UsersAdmin />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AppShell>
+  );
+};
+
+/* ─── Instructor Notes Admin ─── */
+const InstructorNotesAdmin = () => {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data: engData } = await supabase.from("engagements").select("id").single();
+      if (engData) {
+        const { data } = await supabase
+          .from("sessions")
+          .select("*")
+          .eq("engagement_id", engData.id)
+          .order("session_number");
+        if (data) {
+          setSessions(data as Session[]);
+          if (data.length > 0) setSelectedSession(data[0].id);
+        }
+      }
+      setIsLoading(false);
+    };
+    fetch();
+  }, []);
+
+  if (isLoading) return <Skeleton className="h-64 w-full" />;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {sessions.map((s) => (
+          <Button
+            key={s.id}
+            variant={selectedSession === s.id ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedSession(s.id)}
+          >
+            Session {s.session_number}
+          </Button>
+        ))}
+      </div>
+      {selectedSession && <NotesEditor sessionId={selectedSession} />}
+    </div>
+  );
+};
+
+const NotesEditor = ({ sessionId }: { sessionId: string }) => {
+  const [notes, setNotes] = useState("");
+  const [files, setFiles] = useState<FileAttachment[]>([]);
+  const [links, setLinks] = useState<LinkItem[]>([]);
+  const [contentId, setContentId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [newLinkTitle, setNewLinkTitle] = useState("");
+  const [newLinkUrl, setNewLinkUrl] = useState("");
+  const [showLinkForm, setShowLinkForm] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchData = async () => {
+      const [contentRes, filesRes, linksRes] = await Promise.all([
+        supabase.from("instructor_session_content").select("*").eq("session_id", sessionId).maybeSingle(),
+        supabase.from("instructor_session_files").select("*").eq("session_id", sessionId).order("created_at", { ascending: false }),
+        supabase.from("instructor_session_links").select("*").eq("session_id", sessionId).order("created_at", { ascending: false }),
+      ]);
+      if (contentRes.data) {
+        setNotes(contentRes.data.notes_markdown || "");
+        setContentId(contentRes.data.id);
+      } else {
+        setNotes("");
+        setContentId(null);
+      }
+      setFiles(filesRes.data || []);
+      setLinks(linksRes.data || []);
+      setIsLoading(false);
+    };
+    fetchData();
+  }, [sessionId]);
+
+  const saveNotes = useCallback(async (content: string) => {
+    if (contentId) {
+      await supabase.from("instructor_session_content").update({ notes_markdown: content }).eq("id", contentId);
+    } else {
+      const { data } = await supabase.from("instructor_session_content").insert({ session_id: sessionId, notes_markdown: content }).select().single();
+      if (data) setContentId(data.id);
+    }
+  }, [contentId, sessionId]);
+
+  const handleNotesChange = (value: string) => {
+    setNotes(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => saveNotes(value), 500);
+  };
+
+  const uploadFile = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop() || "png";
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${sessionId}/${fileName}`;
+      const { error: uploadError } = await supabase.storage.from("instructor-files").upload(filePath, file);
+      if (uploadError) throw uploadError;
+      const { data, error: dbError } = await supabase.from("instructor_session_files").insert({ session_id: sessionId, file_name: file.name, file_path: filePath, file_type: file.type, file_size: file.size }).select().single();
+      if (dbError) throw dbError;
+      if (data) setFiles((prev) => [data, ...prev]);
+    } catch (error) { console.error("Upload error:", error); }
+    finally { setIsUploading(false); }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fl = e.target.files;
+    if (fl) for (const f of fl) await uploadFile(f);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    for (const item of e.clipboardData.items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) await uploadFile(file);
+        break;
+      }
+    }
+  };
+
+  const deleteFile = async (file: FileAttachment) => {
+    await supabase.storage.from("instructor-files").remove([file.file_path]);
+    await supabase.from("instructor_session_files").delete().eq("id", file.id);
+    setFiles((prev) => prev.filter((f) => f.id !== file.id));
+  };
+
+  const addLink = async () => {
+    if (!newLinkTitle.trim() || !newLinkUrl.trim()) return;
+    const url = newLinkUrl.startsWith("http") ? newLinkUrl : `https://${newLinkUrl}`;
+    const { data, error } = await supabase.from("instructor_session_links").insert({ session_id: sessionId, title: newLinkTitle.trim(), url }).select().single();
+    if (!error && data) {
+      setLinks((prev) => [data, ...prev]);
+      setNewLinkTitle("");
+      setNewLinkUrl("");
+      setShowLinkForm(false);
+    }
+  };
+
+  const deleteLink = async (id: string) => {
+    await supabase.from("instructor_session_links").delete().eq("id", id);
+    setLinks((prev) => prev.filter((l) => l.id !== id));
+  };
+
+  const getPublicUrl = (filePath: string) => {
+    const { data } = supabase.storage.from("instructor-files").getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
+  if (isLoading) return <Skeleton className="h-48 w-full" />;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Edit Instructor Notes</CardTitle>
+        <p className="text-xs text-muted-foreground">These notes are visible to all users</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <RichTextEditor
+          content={notes}
+          onChange={handleNotesChange}
+          onPaste={(e) => {
+            const items = (e as any).clipboardData?.items;
+            if (items) {
+              for (const item of items) {
+                if (item.type.startsWith("image/")) {
+                  const file = item.getAsFile();
+                  if (file) uploadFile(file);
+                  break;
+                }
+              }
+            }
+          }}
+          placeholder="Add notes for participants... Paste screenshots with Ctrl+V"
+        />
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" multiple onChange={handleFileChange} className="hidden" />
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="gap-2">
+            {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            Upload File
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowLinkForm(!showLinkForm)} className="gap-2">
+            <LinkIcon className="h-4 w-4" /> Add Link
+          </Button>
+        </div>
+
+        {showLinkForm && (
+          <div className="flex flex-col sm:flex-row gap-2 p-3 bg-muted rounded-lg">
+            <Input placeholder="Link title" value={newLinkTitle} onChange={(e) => setNewLinkTitle(e.target.value)} className="text-sm" />
+            <Input placeholder="https://..." value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="text-sm" />
+            <Button size="sm" onClick={addLink} className="gap-1 shrink-0"><Plus className="h-4 w-4" /> Add</Button>
+          </div>
+        )}
+
+        {files.length > 0 && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Attachments</Label>
+            <div className="grid gap-2">
+              {files.map((file) => {
+                const url = getPublicUrl(file.file_path);
+                return (
+                  <div key={file.id} className="flex items-center gap-3 p-2 bg-muted rounded-lg">
+                    {file.file_type.startsWith("image/") && url ? (
+                      <a href={url} target="_blank" rel="noopener noreferrer">
+                        <img src={url} alt={file.file_name} className="h-12 w-12 object-cover rounded" />
+                      </a>
+                    ) : (
+                      <div className="h-12 w-12 flex items-center justify-center bg-background rounded">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate block hover:underline">{file.file_name}</a>
+                      <p className="text-xs text-muted-foreground">{file.file_size ? `${(file.file_size / 1024).toFixed(1)} KB` : ""}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => deleteFile(file)}><X className="h-4 w-4" /></Button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {links.length > 0 && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Links</Label>
+            <div className="grid gap-2">
+              {links.map((link) => (
+                <div key={link.id} className="flex items-center gap-3 p-2 bg-muted rounded-lg">
+                  <div className="h-8 w-8 flex items-center justify-center bg-background rounded">
+                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-0 text-sm font-medium truncate hover:underline text-secondary">{link.title}</a>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => deleteLink(link.id)}><X className="h-4 w-4" /></Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground">Changes are saved automatically.</p>
+      </CardContent>
+    </Card>
+  );
+};
+
+/* ─── Session Status Admin ─── */
+const SessionStatusAdmin = () => {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [notes, setNotes] = useState<Record<string, SessionNote>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data: engData } = await supabase.from("engagements").select("id").single();
+      if (engData) {
+        const [sessRes, notesRes] = await Promise.all([
+          supabase.from("sessions").select("*").eq("engagement_id", engData.id).order("session_number"),
+          supabase.from("session_notes").select("*"),
+        ]);
+        if (sessRes.data) setSessions(sessRes.data as Session[]);
+        if (notesRes.data) {
+          const map: Record<string, SessionNote> = {};
+          notesRes.data.forEach((n) => { map[n.session_id] = n as SessionNote; });
+          setNotes(map);
+        }
+      }
+      setIsLoading(false);
+    };
+    fetch();
+  }, []);
+
+  const updateStatus = async (sessionId: string, status: SessionStatus) => {
+    setSaving(sessionId);
+    const existing = notes[sessionId];
+    if (existing) {
+      await supabase.from("session_notes").update({
+        status,
+        completed_at: status === "complete" ? new Date().toISOString() : null,
+      }).eq("id", existing.id);
+      setNotes((prev) => ({ ...prev, [sessionId]: { ...existing, status } }));
+    } else {
+      const { data } = await supabase.from("session_notes").insert({
+        session_id: sessionId,
+        status,
+        completed_at: status === "complete" ? new Date().toISOString() : null,
+      }).select().single();
+      if (data) setNotes((prev) => ({ ...prev, [sessionId]: data as SessionNote }));
+    }
+    setSaving(null);
+  };
+
+  if (isLoading) return <Skeleton className="h-48 w-full" />;
+
+  const statusOptions: { value: SessionStatus; label: string; color: string }[] = [
+    { value: "not_started", label: "Not Started", color: "bg-muted text-muted-foreground" },
+    { value: "in_progress", label: "In Progress", color: "bg-blue-100 text-blue-700" },
+    { value: "complete", label: "Complete", color: "bg-green-100 text-green-700" },
+    { value: "locked", label: "Locked", color: "bg-amber-100 text-amber-700" },
+  ];
+
+  return (
+    <div className="grid gap-4">
+      {sessions.map((s) => {
+        const current = notes[s.id]?.status || "not_started";
+        return (
+          <Card key={s.id}>
+            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4">
+              <div>
+                <p className="font-medium">Session {s.session_number}</p>
+                <p className="text-sm text-muted-foreground">{s.focus}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={current} onValueChange={(v) => updateStatus(s.id, v as SessionStatus)}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <Badge className={opt.color}>{opt.label}</Badge>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {saving === s.id && <Loader2 className="h-4 w-4 animate-spin" />}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+};
+
+/* ─── Users Admin ─── */
+const UsersAdmin = () => {
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase.from("profiles").select("*").order("created_at");
+      if (data) setProfiles(data as Profile[]);
+      setIsLoading(false);
+    };
+    fetch();
+  }, []);
+
+  if (isLoading) return <Skeleton className="h-48 w-full" />;
+
+  return (
+    <div className="grid gap-3">
+      {profiles.map((p) => (
+        <Card key={p.id}>
+          <CardContent className="flex items-center justify-between py-4">
+            <div>
+              <p className="font-medium">{p.full_name || "No name"}</p>
+              <p className="text-sm text-muted-foreground">{p.org_name}</p>
+            </div>
+            <Badge variant={p.role === "trainer" ? "default" : "secondary"}>
+              {p.role === "trainer" ? "Trainer" : "Client"}
+            </Badge>
+          </CardContent>
+        </Card>
+      ))}
+      {profiles.length === 0 && (
+        <p className="text-sm text-muted-foreground">No users found.</p>
+      )}
+    </div>
+  );
+};
+
+export default Admin;

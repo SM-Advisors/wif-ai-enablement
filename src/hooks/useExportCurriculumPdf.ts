@@ -1,0 +1,577 @@
+import { useCallback, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { SESSION_CONTENT } from "@/data/curriculumContent";
+import { toast } from "@/hooks/use-toast";
+
+interface Session {
+  id: string;
+  session_number: number;
+  date: string;
+  duration_minutes: number;
+  focus: string;
+}
+
+interface SessionNote {
+  status: string;
+  trainer_notes: string | null;
+  client_notes: string | null;
+  decisions: string | null;
+  action_items: string | null;
+  risks_open_questions: string | null;
+}
+
+interface InstructorContent {
+  notes_markdown: string | null;
+}
+
+interface InstructorFile {
+  file_name: string;
+  file_path: string;
+  file_type: string;
+}
+
+interface InstructorLink {
+  title: string;
+  url: string;
+}
+
+type SessionContentItem = {
+  title: string;
+  focus: string;
+  purpose: string;
+  howSessionIsRun: string[];
+  deliverables: string[];
+  homeworkBank?: string[];
+  prepSM?: string[];
+  closeOut?: string;
+};
+
+const sessionContentMap: Record<number, SessionContentItem> = {
+  1: SESSION_CONTENT.session1,
+  2: SESSION_CONTENT.session2,
+  3: SESSION_CONTENT.session3,
+  4: SESSION_CONTENT.session4,
+};
+
+const statusLabels: Record<string, string> = {
+  not_started: "Not Started",
+  in_progress: "In Progress",
+  complete: "Complete",
+  locked: "Locked",
+};
+
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+const escapeHtml = (text: string) =>
+  text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const markdownToHtml = (md: string) => {
+  let html = escapeHtml(md);
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  // Italic
+  html = html.replace(/_(.+?)_/g, "<em>$1</em>");
+  // Inline code
+  html = html.replace(/`(.+?)`/g, "<code>$1</code>");
+  // Headings
+  html = html.replace(/^## (.+)$/gm, '<h4 class="md-h2">$1</h4>');
+  // Ordered lists
+  html = html.replace(/^(\d+)\. (.+)$/gm, '<li class="md-ol">$2</li>');
+  // Unordered lists
+  html = html.replace(/^- (.+)$/gm, '<li class="md-ul">$1</li>');
+  // Blockquote
+  html = html.replace(/^&gt; (.+)$/gm, '<blockquote class="md-quote">$1</blockquote>');
+  // Divider
+  html = html.replace(/^---$/gm, '<hr class="md-hr"/>');
+  // Paragraphs (double newline)
+  html = html.replace(/\n\n/g, "</p><p>");
+  // Single newline to <br>
+  html = html.replace(/\n/g, "<br/>");
+  return `<p>${html}</p>`;
+};
+
+export const useExportCurriculumPdf = () => {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportPdf = useCallback(
+    async (
+      sessions: Session[],
+      sessionNotes: Record<string, SessionNote>,
+      engagementTitle: string
+    ) => {
+      setIsExporting(true);
+      try {
+        // Fetch all instructor content in parallel
+        const sessionIds = sessions.map((s) => s.id);
+        const [contentRes, filesRes, linksRes] = await Promise.all([
+          supabase
+            .from("instructor_session_content")
+            .select("session_id, notes_markdown")
+            .in("session_id", sessionIds),
+          supabase
+            .from("instructor_session_files")
+            .select("session_id, file_name, file_path, file_type")
+            .in("session_id", sessionIds)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("instructor_session_links")
+            .select("session_id, title, url")
+            .in("session_id", sessionIds)
+            .order("created_at", { ascending: false }),
+        ]);
+
+        const contentBySession: Record<string, InstructorContent> = {};
+        contentRes.data?.forEach((c) => {
+          contentBySession[c.session_id] = c;
+        });
+
+        const filesBySession: Record<string, InstructorFile[]> = {};
+        filesRes.data?.forEach((f) => {
+          if (!filesBySession[f.session_id]) filesBySession[f.session_id] = [];
+          filesBySession[f.session_id].push(f);
+        });
+
+        const linksBySession: Record<string, InstructorLink[]> = {};
+        linksRes.data?.forEach((l) => {
+          if (!linksBySession[l.session_id]) linksBySession[l.session_id] = [];
+          linksBySession[l.session_id].push(l);
+        });
+
+        // Build HTML for each session
+        const sessionsHtml = sessions
+          .map((session, idx) => {
+            const content = sessionContentMap[session.session_number];
+            if (!content) return "";
+            const note = sessionNotes[session.id];
+            const instructorContent = contentBySession[session.id];
+            const instructorFiles = filesBySession[session.id] || [];
+            const instructorLinks = linksBySession[session.id] || [];
+            const pageBreak = idx > 0 ? "page-break" : "";
+
+            const status = note?.status || "not_started";
+
+            const listItems = (items: string[]) =>
+              items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+
+            // Instructor notes section
+            let instructorSection = "";
+            const hasInstructorContent =
+              instructorContent?.notes_markdown?.trim() ||
+              instructorFiles.length > 0 ||
+              instructorLinks.length > 0;
+
+            if (hasInstructorContent) {
+              let notesHtml = "";
+              if (instructorContent?.notes_markdown?.trim()) {
+                notesHtml = `<div class="instructor-notes-text">${markdownToHtml(instructorContent.notes_markdown)}</div>`;
+              }
+
+              let filesHtml = "";
+              if (instructorFiles.length > 0) {
+                const fileItems = instructorFiles
+                  .map((f) => {
+                    const url = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/instructor-files/${f.file_path}`;
+                    return `<li><a href="${url}" target="_blank">${escapeHtml(f.file_name)}</a></li>`;
+                  })
+                  .join("");
+                filesHtml = `<div class="subsection"><h4>📎 Attachments</h4><ul>${fileItems}</ul></div>`;
+              }
+
+              let linksHtml = "";
+              if (instructorLinks.length > 0) {
+                const linkItems = instructorLinks
+                  .map(
+                    (l) =>
+                      `<li><a href="${escapeHtml(l.url)}" target="_blank">${escapeHtml(l.title)}</a></li>`
+                  )
+                  .join("");
+                linksHtml = `<div class="subsection"><h4>🔗 Links</h4><ul>${linkItems}</ul></div>`;
+              }
+
+              instructorSection = `
+                <div class="section instructor-section">
+                  <h3>📝 Instructor Notes</h3>
+                  ${notesHtml}
+                  ${filesHtml}
+                  ${linksHtml}
+                </div>`;
+            }
+
+            // Session notes section
+            let sessionNotesSection = "";
+            const noteFields = [
+              { label: "Decisions", value: note?.decisions },
+              { label: "Action Items", value: note?.action_items },
+              { label: "Risks & Open Questions", value: note?.risks_open_questions },
+              { label: "Client Notes", value: note?.client_notes },
+              { label: "Trainer Notes", value: note?.trainer_notes },
+            ].filter((f) => f.value?.trim());
+
+            if (noteFields.length > 0) {
+              const fieldsHtml = noteFields
+                .map(
+                  (f) =>
+                    `<div class="note-field"><h4>${f.label}</h4><p>${escapeHtml(f.value!)}</p></div>`
+                )
+                .join("");
+              sessionNotesSection = `<div class="section""><h3>Session Notes</h3>${fieldsHtml}</div>`;
+            }
+
+            return `
+            <div class="session-page ${pageBreak}">
+              <div class="session-header">
+                <div class="session-title-row">
+                  <h2>${escapeHtml(content.title)}</h2>
+                  <span class="status-badge status-${status}">${statusLabels[status] || status}</span>
+                </div>
+                <p class="session-focus">${escapeHtml(content.focus)}</p>
+              </div>
+
+              <div class="section">
+                <h3>Purpose</h3>
+                <p>${escapeHtml(content.purpose)}</p>
+              </div>
+
+              <div class="section">
+                <h3>How the Session Is Run</h3>
+                <ol>${listItems(content.howSessionIsRun)}</ol>
+              </div>
+
+              <div class="section">
+                <h3>Deliverables / Artifacts</h3>
+                <ul class="check-list">${listItems(content.deliverables)}</ul>
+              </div>
+
+              ${
+                content.homeworkBank
+                  ? `<div class="section"><h3>Homework (Bank)</h3><ul>${listItems(content.homeworkBank)}</ul></div>`
+                  : ""
+              }
+
+              ${
+                content.prepSM
+                  ? `<div class="section"><h3>Prep (SM Advisors)</h3><ul>${listItems(content.prepSM)}</ul></div>`
+                  : ""
+              }
+
+              ${
+                content.closeOut
+                  ? `<div class="section closeout"><h3>Close-Out</h3><p>${escapeHtml(content.closeOut)}</p></div>`
+                  : ""
+              }
+
+              ${instructorSection}
+              ${sessionNotesSection}
+            </div>`;
+          })
+          .join("");
+
+        const today = new Date().toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) {
+          toast({
+            title: "Popup blocked",
+            description: "Please allow popups to export PDF.",
+            variant: "destructive",
+          });
+          setIsExporting(false);
+          return;
+        }
+
+        printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>${escapeHtml(engagementTitle)} - Curriculum Report</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    @page {
+      size: letter portrait;
+      margin: 0.6in 0.75in;
+    }
+
+    @media print {
+      body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .page-break { page-break-before: always; }
+      .no-break { page-break-inside: avoid; }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: #1a1a2e;
+      background: #fff;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    /* Cover page */
+    .cover {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 92vh;
+      text-align: center;
+      padding: 60px 40px;
+    }
+
+    .cover-logo {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #d4826a;
+      margin-bottom: 40px;
+    }
+
+    .cover h1 {
+      font-size: 36px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .cover .subtitle {
+      font-size: 16px;
+      color: #5b6770;
+      margin-bottom: 48px;
+    }
+
+    .cover-divider {
+      width: 80px;
+      height: 3px;
+      background: #d4826a;
+      margin: 0 auto 48px;
+    }
+
+    .cover-meta {
+      font-size: 12px;
+      color: #5b6770;
+    }
+
+    .cover-meta strong { color: #1a1a2e; }
+
+    /* Session pages */
+    .session-page { padding: 0; }
+
+    .session-header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 20px 28px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+
+    .session-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .session-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .session-focus {
+      margin-top: 6px;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .status-not_started { background: #e5e7eb; color: #6b7280; }
+    .status-in_progress { background: #dbeafe; color: #2563eb; }
+    .status-complete { background: #d1fae5; color: #059669; }
+    .status-locked { background: #fef3c7; color: #d97706; }
+
+    /* Sections */
+    .section {
+      margin-bottom: 20px;
+      page-break-inside: avoid;
+    }
+
+    .section h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a2e;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #d4826a;
+      margin-bottom: 10px;
+    }
+
+    .section p {
+      color: #374151;
+      white-space: pre-line;
+    }
+
+    .section ol, .section ul {
+      padding-left: 20px;
+      color: #374151;
+    }
+
+    .section li {
+      margin-bottom: 5px;
+      white-space: pre-line;
+    }
+
+    .check-list { list-style-type: '✓  '; }
+    .check-list li { padding-left: 4px; }
+
+    /* Instructor notes */
+    .instructor-section {
+      background: #faf8f5;
+      border: 1px solid #e5ddd3;
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    .instructor-section h3 {
+      border-bottom-color: #c8a882;
+    }
+
+    .instructor-notes-text p { color: #374151; }
+    .instructor-notes-text code {
+      background: #f3f4f6;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 10px;
+    }
+
+    .instructor-notes-text .md-h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin: 10px 0 4px;
+    }
+
+    .instructor-notes-text .md-quote {
+      border-left: 3px solid #d4826a;
+      padding-left: 10px;
+      color: #5b6770;
+      font-style: italic;
+      margin: 6px 0;
+    }
+
+    .instructor-notes-text .md-hr {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 12px 0;
+    }
+
+    .subsection { margin-top: 12px; }
+    .subsection h4 { font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #1a1a2e; }
+    .subsection ul { padding-left: 18px; }
+    .subsection a { color: #d4826a; text-decoration: underline; }
+
+    /* Session notes */
+    .note-field {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+    }
+
+    .note-field h4 {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .note-field p { color: #374151; white-space: pre-line; }
+
+    /* Close-out */
+    .closeout {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    .closeout h3 { border-bottom-color: #22c55e; }
+
+    /* Footer */
+    .doc-footer {
+      text-align: center;
+      padding-top: 24px;
+      margin-top: 40px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 10px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cover Page -->
+  <div class="cover">
+    <div class="cover-logo">SM Advisors</div>
+    <h1>Curriculum Report</h1>
+    <p class="subtitle">${escapeHtml(engagementTitle)}</p>
+    <div class="cover-divider"></div>
+    <div class="cover-meta">
+      <p>Prepared: <strong>${today}</strong></p>
+      <p>${sessions.length} Sessions · ${sessions.map((s) => formatDate(s.date)).join(" · ")}</p>
+    </div>
+  </div>
+
+  ${sessionsHtml}
+
+  <div class="doc-footer">
+    © ${new Date().getFullYear()} SM Advisors · Confidential · Prepared ${today}
+  </div>
+</body>
+</html>`);
+
+        printWindow.document.close();
+        setTimeout(() => {
+          printWindow.print();
+          setIsExporting(false);
+        }, 600);
+      } catch (error) {
+        console.error("Export error:", error);
+        toast({
+          title: "Export failed",
+          description: "Could not generate PDF. Please try again.",
+          variant: "destructive",
+        });
+        setIsExporting(false);
+      }
+    },
+    []
+  );
+
+  return { exportPdf, isExporting };
+};

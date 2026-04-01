@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* BankMiami Color Scheme - Derived from logo */
+    /* Dark charcoal/black background, coral/rose gold accent, white text */
+    
+    --background: 210 10% 96%;
+    --foreground: 210 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 10% 10%;
+
+    /* Primary - Dark Charcoal from logo background #1a1a1a */
+    --primary: 0 0% 10%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Coral/Rose Gold from flamingo #d4826a */
+    --secondary: 15 55% 62%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted - Light gray */
+    --muted: 210 10% 92%;
+    --muted-foreground: 210 10% 40%;
+
+    /* Accent - Coral/Rose Gold (same as secondary for consistency) */
+    --accent: 15 55% 62%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Warm gray for lighter elements */
+    --warm-gray: 30 5% 85%;
+    
+    --border: 210 10% 87%;
+    --input: 210 10% 87%;
+    --ring: 15 55% 62%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar uses dark charcoal theme */
+    --sidebar-background: 0 0% 10%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 15 55% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 15 55% 62%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 15 55% 62%;
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 10%;
+
+    --secondary: 15 55% 62%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 15 55% 62%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 15 55% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Custom scrollbar for mobile tabs */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Print Styles for PDF Generation */
+@media print {
+  @page {
+    size: landscape;
+    margin: 0.5in;
+  }
+  
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .print\:hidden {
+    display: none !important;
+  }
+}
+
+/* TipTap placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
