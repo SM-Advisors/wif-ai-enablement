@@ -37,13 +37,11 @@ type SessionStatus = "not_started" | "in_progress" | "complete" | "locked";
 interface Session {
   id: string;
   session_number: number;
-  program_id: string;
-  title: string;
-  theme: string;
-  outcomes: string[];
-  topics: string[];
-  agenda: string[];
-  homework: string[];
+  focus: string;
+  duration_minutes: number;
+  engagement_id: string;
+  date: string;
+  created_at: string;
 }
 
 interface SessionNote {
