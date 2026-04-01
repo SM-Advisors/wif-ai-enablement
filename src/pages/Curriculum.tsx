@@ -508,13 +508,13 @@ const Curriculum = () => {
                     {/* Left Column */}
                     <div className="space-y-6">
                       {/* Outcomes */}
-                      {outcomes.length > 0 && (
+                      {staticSession?.outcomes && staticSession.outcomes.length > 0 && (
                         <div className="border border-slate-200 rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-slate-900 mb-3 pb-2 border-b border-orange-200">
                             Learning Outcomes
                           </h3>
                           <ul className="space-y-2">
-                            {outcomes.map((outcome: string, idx: number) => (
+                            {staticSession.outcomes.map((outcome: string, idx: number) => (
                               <li key={idx} className="flex gap-2 text-sm text-slate-700">
                                 <span className="text-orange-500 font-bold">•</span>
                                 <span>{outcome}</span>
@@ -525,13 +525,13 @@ const Curriculum = () => {
                       )}
 
                       {/* Topics */}
-                      {topics.length > 0 && (
+                      {staticSession?.topics && staticSession.topics.length > 0 && (
                         <div className="border border-slate-200 rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-slate-900 mb-3 pb-2 border-b border-orange-200">
                             Core Topics
                           </h3>
                           <ul className="space-y-2">
-                            {topics.map((topic: string, idx: number) => (
+                            {staticSession.topics.flatMap(section => section.items).map((topic: string, idx: number) => (
                               <li key={idx} className="flex gap-2 text-sm text-slate-700">
                                 <span className="text-orange-500 font-bold">▪</span>
                                 <span>{topic}</span>
@@ -545,16 +545,16 @@ const Curriculum = () => {
                     {/* Right Column */}
                     <div className="space-y-6">
                       {/* Agenda */}
-                      {agenda.length > 0 && (
+                      {staticSession?.agenda && staticSession.agenda.length > 0 && (
                         <div className="border border-slate-200 rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-slate-900 mb-3 pb-2 border-b border-orange-200">
                             Agenda
                           </h3>
                           <ol className="space-y-2">
-                            {agenda.map((item: string, idx: number) => (
+                            {staticSession.agenda.map((item, idx: number) => (
                               <li key={idx} className="flex gap-2 text-sm text-slate-700">
-                                <span className="text-orange-500 font-bold min-w-6">{idx + 1}.</span>
-                                <span>{item}</span>
+                                <span className="text-orange-500 font-bold min-w-6">{item.time}</span>
+                                <span>{item.description}</span>
                               </li>
                             ))}
                           </ol>
@@ -562,13 +562,13 @@ const Curriculum = () => {
                       )}
 
                       {/* Homework */}
-                      {homework.length > 0 && (
+                      {staticSession?.homework && staticSession.homework.length > 0 && (
                         <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-blue-900 mb-3 pb-2 border-b border-blue-200">
                             Follow-Through Work
                           </h3>
                           <ul className="space-y-2">
-                            {homework.map((item: string, idx: number) => (
+                            {staticSession.homework.map((item: string, idx: number) => (
                               <li key={idx} className="flex gap-2 text-sm text-blue-800">
                                 <span className="text-blue-600 font-bold">✓</span>
                                 <span>{item}</span>
