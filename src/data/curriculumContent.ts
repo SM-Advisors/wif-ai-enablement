@@ -34,36 +34,31 @@ export const SESSION_CONTENT: SessionContent[] = [
     themeDescription: 'This is the right place to make AI feel accessible, useful, and non-technical.',
     durationMinutes: 90,
     outcomes: [
-      'Understand the common building blocks across ChatGPT and Copilot',
+      'Understand the common building blocks across AI platforms',
       'Personalize AI to reflect your role, goals, and preferred working style',
       'Choose models more intentionally',
-      'Use voice and dictation effectively',
-      'Use at least 2–3 conversational frameworks to get better outputs',
+      'Use conversational frameworks to get better outputs',
     ],
     topics: [
       {
         title: 'What is consistent across AI platforms',
-        items: ['Prompt box', 'Memory and context', 'Files', 'Voice and dictation', 'Model options', 'Projects, workspaces, and chats'],
+        items: ['Prompt box', 'Memory and context', 'Files', 'Voice and dictation'],
       },
       {
-        title: 'ChatGPT vs Copilot',
-        items: ['Focus on similarities first, differences second'],
+        title: 'Comparing the LLMs',
+        items: ['Key similarities and differences', 'When to use which platform', 'Model selection: speed vs depth'],
       },
       {
         title: 'Personalization',
-        items: ['Profile setup', 'Personalization template', 'How to describe your role, priorities, audience, tone, and goals'],
+        items: ['Profile setup and personalization template', 'How to describe your role, priorities, audience, tone, and goals'],
       },
       {
         title: 'Memory and context',
-        items: ['What memory is', 'What should and should not go into memory', 'When to repeat context even if memory exists'],
-      },
-      {
-        title: 'Model selection',
-        items: ['When to use faster vs deeper reasoning models', 'When precision matters more than speed'],
+        items: ['What memory is and how it works', 'What should and should not go into memory'],
       },
       {
         title: 'How to talk to AI',
-        items: ['Dictation as a thinking tool', 'Conversational prompting', 'Iterative prompting rather than one perfect prompt'],
+        items: ['Dictation as a thinking tool', 'Conversational and iterative prompting'],
       },
       {
         title: 'Conversation frameworks',
@@ -80,12 +75,9 @@ export const SESSION_CONTENT: SessionContent[] = [
       { time: '1:25–1:30', description: 'Homework and close' },
     ],
     homework: [
-      'Refine and iterate your personalization',
-      'Use AI in 3–5 real work or life situations',
-      'Document where you experienced friction',
-      'Capture examples of what worked surprisingly well',
-      'Note where outputs fell short',
-      'Note where you were unsure how to ask better questions',
+      'Refine your personalization and use AI in 3–5 real work or life situations',
+      'Document what worked well, where outputs fell short, and where you felt friction',
+      'Identify one reasonably complex Excel file you regularly use — a financial model, budget, forecast, or statement — to bring to Session 2 for the Excel + AI workshop',
     ],
   },
   {
@@ -96,9 +88,9 @@ export const SESSION_CONTENT: SessionContent[] = [
     durationMinutes: 90,
     outcomes: [
       'Use AI to organize complex financial thinking',
-      'Use AI alongside Excel to interpret, troubleshoot, analyze, and accelerate work',
+      'Leverage AI-powered Excel plugins to analyze, audit, and accelerate workbooks',
       'Delegate parts of a workflow to AI without losing judgment',
-      'Move from blank page or messy workbook to clearer analysis faster',
+      'Move from messy workbook to clearer analysis faster',
     ],
     topics: [
       {
@@ -110,15 +102,12 @@ export const SESSION_CONTENT: SessionContent[] = [
         items: ['Turning a messy question into a structured problem', 'Asking AI to clarify assumptions, identify gaps, and build logic trees'],
       },
       {
-        title: 'Excel + AI',
+        title: 'Excel + AI plugins',
         items: [
-          'Explaining formulas',
-          'Troubleshooting broken formulas',
-          'Identifying anomalies and patterns',
-          'Building formulas from plain English',
-          'Analyzing financial statements, budgets, forecasts, and models',
-          'Summarizing workbook structure',
-          'Generating scenario questions to test assumptions',
+          'Overview of AI-powered Excel plugins and Copilot integration',
+          'Analyzing financial statements, budgets, forecasts, and models with AI assistance',
+          'Identifying anomalies, patterns, and scenario testing across complex workbooks',
+          'Translating workbook insights into executive narratives and summaries',
         ],
       },
       {
@@ -127,28 +116,25 @@ export const SESSION_CONTENT: SessionContent[] = [
           '"Act as my FP&A partner"',
           '"Audit this model logic"',
           '"Challenge the assumptions"',
-          '"Translate this workbook into an executive narrative"',
         ],
       },
       {
         title: 'Guardrails',
-        items: ['Where AI helps', 'Where human review is non-negotiable', 'Judgment and validation matter especially in finance'],
+        items: ['Where AI helps vs where human review is non-negotiable', 'Judgment and validation in finance'],
       },
     ],
     agenda: [
       { time: '0:00–0:15', description: 'Debrief homework and friction patterns' },
       { time: '0:15–0:30', description: 'Thought organization methods for finance work' },
-      { time: '0:30–1:05', description: 'Excel + AI live demos' },
+      { time: '0:30–1:05', description: 'Excel + AI plugin demos with participant workbooks' },
       { time: '1:05–1:20', description: 'Hands-on workbook exercise' },
       { time: '1:20–1:25', description: "Debrief: what worked, what didn't" },
       { time: '1:25–1:30', description: 'Homework and close' },
     ],
     homework: [
       'Bring one real finance workflow or workbook through the full AI process',
-      'Document where AI added value',
-      'Document where you had to redirect it',
-      'Note what instructions improved the result',
-      'Note what still felt clunky or unreliable',
+      'Document where AI added value and where you had to redirect it',
+      'Note what instructions improved the result and what still felt unreliable',
       'Create one "best prompt so far" from your own work',
     ],
   },
@@ -156,7 +142,7 @@ export const SESSION_CONTENT: SessionContent[] = [
     sessionNumber: 3,
     title: 'Building Repeatable AI Systems for Ongoing Work',
     theme: 'Subject-matter experts, projects, and lightweight agents',
-    themeDescription: 'Where agent building and organization over time belong — making AI sustainable, consistent, and scalable.',
+    themeDescription: 'Making AI sustainable, consistent, and scalable — building systems that compound over time.',
     durationMinutes: 90,
     outcomes: [
       'Write stronger instructions for repeatable AI support',
@@ -175,23 +161,19 @@ export const SESSION_CONTENT: SessionContent[] = [
       },
       {
         title: 'Building subject-matter experts',
-        items: ['Board deck reviewer', 'FP&A analyst', 'Budget challenge partner', 'Executive communications editor', 'Meeting prep strategist'],
+        items: ['Board deck reviewer', 'FP&A analyst', 'Budget challenge partner', 'Executive communications editor'],
       },
       {
         title: 'Projects and persistent context',
-        items: ['How to organize ongoing work', 'Files, notes, chats, outputs, and decisions across time', 'When to start a new project vs continue an old one'],
+        items: ['How to organize ongoing work with files, notes, and decisions', 'When to start a new project vs continue an old one'],
       },
       {
         title: 'Lightweight agents and repeatable workflows',
-        items: ['Recurring monthly reporting', 'Budget variance review', 'Executive summary generation', 'Preparing questions for leadership meetings'],
-      },
-      {
-        title: 'Cross-platform translation',
-        items: ['How the same logic shows up in ChatGPT and Copilot'],
+        items: ['Recurring monthly reporting', 'Budget variance review', 'Executive summary generation'],
       },
       {
         title: 'Final discussion',
-        items: ['Where participants are seeing the most value', 'What they want to experiment with next', 'How to continue learning without overwhelm'],
+        items: ['Where participants are seeing the most value', 'What they want to experiment with next'],
       },
     ],
     agenda: [
@@ -200,12 +182,11 @@ export const SESSION_CONTENT: SessionContent[] = [
       { time: '0:35–0:55', description: 'Build a subject-matter expert together' },
       { time: '0:55–1:10', description: 'Projects and ongoing context' },
       { time: '1:10–1:20', description: 'Lightweight agent examples' },
-      { time: '1:20–1:30', description: 'Final reflections and next-step commitments' },
+      { time: '1:20–1:30', description: 'Final reflections and open discussion' },
     ],
     homework: [
       'Identify 2 recurring workflows to AI-enable',
       'Define 1 subject-matter expert to build further',
-      'Define 1 collaboration or leadership use case to test in the next 30 days',
     ],
   },
 ];
