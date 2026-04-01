@@ -13,32 +13,30 @@ import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
+// Requires auth — redirects to /login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
-  
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-secondary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
-  
   return user ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+// Login page — redirects to /curriculum if already logged in
+const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
-  
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-secondary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
-  
-  return user ? <Navigate to="/" replace /> : <>{children}</>;
+  return user ? <Navigate to="/curriculum" replace /> : <>{children}</>;
 };
 
 const App = () => (
@@ -49,8 +47,8 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path="/" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
             <Route path="/curriculum" element={<ProtectedRoute><Curriculum /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

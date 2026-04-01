@@ -7,8 +7,8 @@ type UserRole = 'trainer' | 'client';
 interface Profile {
   id: string;
   full_name: string | null;
+  email: string | null;
   role: UserRole;
-  org_name: string | null;
 }
 
 interface AuthContextType {
@@ -33,10 +33,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, full_name, email, role')
       .eq('id', userId)
       .single();
-    
     if (error) {
       console.error('Error fetching profile:', error);
       return null;
@@ -45,14 +44,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
         if (session?.user) {
-          // Use setTimeout to avoid potential deadlock with Supabase
           setTimeout(async () => {
             const profileData = await fetchProfile(session.user.id);
             setProfile(profileData);
@@ -65,11 +61,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
       if (session?.user) {
         fetchProfile(session.user.id).then((profileData) => {
           setProfile(profileData);
@@ -84,10 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
   };
 
@@ -96,9 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
       options: {
-        data: {
-          full_name: fullName,
-        },
+        data: { full_name: fullName },
         emailRedirectTo: window.location.origin,
       },
     });
@@ -115,16 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isTrainer = profile?.role === 'trainer';
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session, 
-      profile, 
-      isLoading, 
-      isTrainer,
-      signIn, 
-      signUp, 
-      signOut 
-    }}>
+    <AuthContext.Provider value={{ user, session, profile, isLoading, isTrainer, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
@@ -132,8 +112,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };

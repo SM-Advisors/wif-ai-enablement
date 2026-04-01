@@ -7,7 +7,7 @@ export const usePrintToPdf = () => {
 
     // Clone the content
     const clonedContent = content.cloneNode(true) as HTMLElement;
-    
+
     // Expand all accordion items for printing
     const accordionItems = clonedContent.querySelectorAll('[data-state="closed"]');
     accordionItems.forEach((item) => {
@@ -51,72 +51,72 @@ export const usePrintToPdf = () => {
           <title>${title} - SM Advisors</title>
           <style>
             ${styles}
-            
+
             @page {
               size: landscape;
               margin: 0.5in;
             }
-            
+
             @media print {
               body {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 background: white !important;
               }
-              
+
               .print-content {
                 padding: 20px;
                 max-width: 100% !important;
               }
-              
+
               /* Ensure backgrounds print */
               * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
               }
-              
+
               /* Page breaks for major sections */
               .page-break {
                 page-break-before: always;
               }
-              
+
               /* Ensure accordions are expanded */
               [data-state="closed"] {
                 display: block !important;
               }
-              
+
               [data-state="closed"] > div {
                 display: block !important;
                 height: auto !important;
               }
             }
-            
+
             body {
               font-family: 'Inter', system-ui, sans-serif;
               background: white;
               color: #1a1a1a;
               padding: 20px;
             }
-            
+
             .print-header {
               text-align: center;
               padding-bottom: 20px;
               border-bottom: 2px solid #C8B08A;
               margin-bottom: 30px;
             }
-            
+
             .print-header h1 {
               color: #0F2D46;
               font-size: 28px;
               font-weight: 700;
               margin: 0;
             }
-            
+
             .print-header p {
               color: #5B6770;
               margin-top: 8px;
             }
-            
+
             .print-footer {
               text-align: center;
               padding-top: 20px;
@@ -143,7 +143,7 @@ export const usePrintToPdf = () => {
     `);
 
     printWindow.document.close();
-    
+
     // Wait for styles to load then print
     setTimeout(() => {
       printWindow.print();

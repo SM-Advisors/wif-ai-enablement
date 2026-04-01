@@ -259,29 +259,29 @@ export const usePrintAllAgenda = () => {
           <title>AI Enablement Meeting Agenda - SM Advisors</title>
           <style>
             ${styles}
-            
+
             @page {
               size: landscape;
               margin: 0.5in;
             }
-            
+
             @media print {
               body {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 background: white !important;
               }
-              
+
               * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
               }
-              
+
               .page-break {
                 page-break-before: always;
               }
             }
-            
+
             body {
               font-family: 'Inter', system-ui, sans-serif;
               background: white;
@@ -289,7 +289,7 @@ export const usePrintAllAgenda = () => {
               margin: 0;
               padding: 0;
             }
-            
+
             .print-header {
               text-align: center;
               padding: 20px;
@@ -298,53 +298,53 @@ export const usePrintAllAgenda = () => {
               background: linear-gradient(135deg, #0F2D46, #1a4a6e);
               color: white;
             }
-            
+
             .print-header h1 {
               font-size: 28px;
               font-weight: 700;
               margin: 0 0 8px 0;
             }
-            
+
             .print-header p {
               margin: 0;
               opacity: 0.9;
             }
-            
+
             .print-page {
               padding: 20px 40px;
               min-height: 600px;
             }
-            
+
             .section-header {
               text-align: center;
               margin-bottom: 24px;
               padding-bottom: 16px;
               border-bottom: 2px solid #C8B08A;
             }
-            
+
             .section-header h2 {
               color: #0F2D46;
               font-size: 28px;
               margin: 0 0 8px 0;
             }
-            
+
             .section-header p {
               color: #5B6770;
               margin: 0;
             }
-            
+
             .section-content {
               max-width: 1000px;
               margin: 0 auto;
             }
-            
+
             .section-content.centered {
               display: flex;
               justify-content: center;
               align-items: center;
               min-height: 300px;
             }
-            
+
             .agent-card {
               text-align: center;
               padding: 40px;
@@ -352,11 +352,11 @@ export const usePrintAllAgenda = () => {
               border-radius: 12px;
               background: #f8f9fa;
             }
-            
+
             .agent-avatar {
               margin-bottom: 16px;
             }
-            
+
             .avatar-placeholder {
               width: 120px;
               height: 120px;
@@ -370,18 +370,18 @@ export const usePrintAllAgenda = () => {
               font-weight: bold;
               margin: 0 auto;
             }
-            
+
             .agent-card h3 {
               color: #0F2D46;
               margin: 0 0 4px 0;
               font-size: 24px;
             }
-            
+
             .agent-card p {
               color: #5B6770;
               margin: 0;
             }
-            
+
             .accordion-expanded {
               background: #f8f9fa;
               border: 1px solid #e2e8f0;
@@ -389,41 +389,41 @@ export const usePrintAllAgenda = () => {
               padding: 16px;
               margin-bottom: 12px;
             }
-            
+
             .accordion-expanded.compact {
               padding: 12px;
               margin-bottom: 8px;
             }
-            
+
             .accordion-expanded h4 {
               color: #0F2D46;
               margin: 0 0 12px 0;
               font-size: 16px;
             }
-            
+
             .accordion-expanded h5 {
               color: #0F2D46;
               margin: 0 0 8px 0;
               font-size: 14px;
             }
-            
+
             .accordion-expanded p {
               color: #5B6770;
               margin: 0 0 12px 0;
               font-size: 13px;
             }
-            
+
             .accordion-expanded ul {
               margin: 0;
               padding-left: 20px;
               color: #5B6770;
               font-size: 13px;
             }
-            
+
             .accordion-expanded li {
               margin-bottom: 6px;
             }
-            
+
             .info-box {
               background: white;
               border: 1px solid #e2e8f0;
@@ -431,23 +431,23 @@ export const usePrintAllAgenda = () => {
               padding: 12px;
               margin-bottom: 10px;
             }
-            
+
             .info-box h5 {
               color: #0F2D46;
               margin: 0 0 6px 0;
             }
-            
+
             .info-box p {
               margin: 0;
               font-size: 12px;
             }
-            
+
             .info-box .example {
               color: #C8B08A;
               font-style: italic;
               margin-top: 4px;
             }
-            
+
             .note {
               background: rgba(200, 176, 138, 0.1);
               border: 1px solid #C8B08A;
@@ -456,31 +456,31 @@ export const usePrintAllAgenda = () => {
               font-size: 12px;
               margin-top: 12px;
             }
-            
+
             .two-column {
               display: grid;
               grid-template-columns: 1fr 1fr;
               gap: 24px;
             }
-            
+
             .column h3 {
               color: #0F2D46;
               margin: 0 0 4px 0;
               font-size: 18px;
             }
-            
+
             .column .subtitle {
               color: #5B6770;
               margin: 0 0 16px 0;
               font-size: 13px;
             }
-            
+
             .phase-list {
               background: #f8f9fa;
               border-radius: 8px;
               padding: 16px;
             }
-            
+
             .phase {
               display: flex;
               align-items: center;
@@ -488,7 +488,7 @@ export const usePrintAllAgenda = () => {
               margin-bottom: 10px;
               font-size: 13px;
             }
-            
+
             .phase-num {
               width: 28px;
               height: 28px;
@@ -502,64 +502,64 @@ export const usePrintAllAgenda = () => {
               font-size: 12px;
               flex-shrink: 0;
             }
-            
+
             .clause-grid {
               display: grid;
               grid-template-columns: repeat(2, 1fr);
               gap: 16px;
             }
-            
+
             .clause-item {
               background: #f8f9fa;
               border: 1px solid #e2e8f0;
               border-radius: 8px;
               padding: 14px;
             }
-            
+
             .clause-item h5 {
               color: #0F2D46;
               margin: 0 0 8px 0;
               font-size: 14px;
             }
-            
+
             .clause-item p {
               color: #5B6770;
               margin: 0;
               font-size: 12px;
             }
-            
+
             .subsection-header {
               text-align: center;
               margin-bottom: 20px;
             }
-            
+
             .subsection-header h3 {
               color: #0F2D46;
               margin: 0 0 8px 0;
             }
-            
+
             .subsection-header p {
               color: #5B6770;
               margin: 0;
             }
-            
+
             .concept-card {
               background: #0F2D46;
               color: white;
               border-radius: 8px;
               padding: 20px;
             }
-            
+
             .concept-card h4 {
               margin: 0 0 8px 0;
               font-size: 20px;
             }
-            
+
             .concept-card .concept-desc {
               opacity: 0.9;
               margin-bottom: 16px;
             }
-            
+
             .concept-card h5 {
               opacity: 0.7;
               font-size: 11px;
@@ -567,49 +567,49 @@ export const usePrintAllAgenda = () => {
               letter-spacing: 0.5px;
               margin: 12px 0 6px 0;
             }
-            
+
             .concept-card ul {
               margin: 0;
               padding-left: 16px;
               font-size: 13px;
             }
-            
+
             .concept-card li {
               margin-bottom: 4px;
               opacity: 0.9;
             }
-            
+
             .services-grid {
               display: grid;
               grid-template-columns: repeat(2, 1fr);
               gap: 20px;
             }
-            
+
             .service-card {
               background: #f8f9fa;
               border: 1px solid #e2e8f0;
               border-radius: 8px;
               padding: 20px;
             }
-            
+
             .service-card h4 {
               color: #0F2D46;
               margin: 0 0 4px 0;
               font-size: 16px;
             }
-            
+
             .service-card .service-duration {
               color: #C8B08A;
               font-size: 12px;
               margin: 0 0 12px 0;
             }
-            
+
             .service-card p {
               color: #5B6770;
               margin: 0;
               font-size: 13px;
             }
-            
+
             .print-footer {
               text-align: center;
               padding: 16px;
@@ -634,7 +634,7 @@ export const usePrintAllAgenda = () => {
     `);
 
     printWindow.document.close();
-    
+
     // Wait for styles to load then print
     setTimeout(() => {
       printWindow.print();

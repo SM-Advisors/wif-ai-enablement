@@ -14,39 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      engagements: {
-        Row: {
-          created_at: string
-          end_date: string | null
-          id: string
-          milestones: Json | null
-          participants: Json | null
-          program_purpose: string | null
-          start_date: string | null
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          end_date?: string | null
-          id?: string
-          milestones?: Json | null
-          participants?: Json | null
-          program_purpose?: string | null
-          start_date?: string | null
-          title: string
-        }
-        Update: {
-          created_at?: string
-          end_date?: string | null
-          id?: string
-          milestones?: Json | null
-          participants?: Json | null
-          program_purpose?: string | null
-          start_date?: string | null
-          title?: string
-        }
-        Relationships: []
-      }
       instructor_session_content: {
         Row: {
           created_at: string
@@ -152,24 +119,48 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          email: string | null
           full_name: string | null
           id: string
-          org_name: string | null
           role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id: string
-          org_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
-          org_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
+      program: {
+        Row: {
+          id: string
+          name: string
+          narrative_arc: string | null
+          short_summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name?: string
+          narrative_arc?: string | null
+          short_summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          narrative_arc?: string | null
+          short_summary?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -225,70 +216,53 @@ export type Database = {
       }
       sessions: {
         Row: {
-          created_at: string
-          date: string
+          agenda: Json
           duration_minutes: number
-          engagement_id: string
-          focus: string
+          homework: Json
           id: string
+          outcomes: Json
+          program_id: string
           session_number: number
-        }
-        Insert: {
-          created_at?: string
-          date: string
-          duration_minutes: number
-          engagement_id: string
-          focus: string
-          id?: string
-          session_number: number
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          duration_minutes?: number
-          engagement_id?: string
-          focus?: string
-          id?: string
-          session_number?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sessions_engagement_id_fkey"
-            columns: ["engagement_id"]
-            isOneToOne: false
-            referencedRelation: "engagements"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sm_advisors_help_content: {
-        Row: {
-          content_markdown: string | null
-          created_at: string
-          engagement_id: string
-          id: string
+          theme: string
+          theme_description: string | null
+          title: string
+          topics: Json
           updated_at: string
         }
         Insert: {
-          content_markdown?: string | null
-          created_at?: string
-          engagement_id: string
+          agenda?: Json
+          duration_minutes?: number
+          homework?: Json
           id?: string
+          outcomes?: Json
+          program_id: string
+          session_number: number
+          theme: string
+          theme_description?: string | null
+          title: string
+          topics?: Json
           updated_at?: string
         }
         Update: {
-          content_markdown?: string | null
-          created_at?: string
-          engagement_id?: string
+          agenda?: Json
+          duration_minutes?: number
+          homework?: Json
           id?: string
+          outcomes?: Json
+          program_id?: string
+          session_number?: number
+          theme?: string
+          theme_description?: string | null
+          title?: string
+          topics?: Json
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "sm_advisors_help_content_engagement_id_fkey"
-            columns: ["engagement_id"]
-            isOneToOne: true
-            referencedRelation: "engagements"
+            foreignKeyName: "sessions_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "program"
             referencedColumns: ["id"]
           },
         ]
@@ -332,6 +306,13 @@ export type Database = {
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_session_attachments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_session_notes: {
@@ -367,6 +348,13 @@ export type Database = {
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_session_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -374,11 +362,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_user_role: {
+      is_trainer: {
         Args: { user_id: string }
-        Returns: Database["public"]["Enums"]["user_role"]
+        Returns: boolean
       }
-      is_trainer: { Args: { user_id: string }; Returns: boolean }
+      update_updated_at_column: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
     }
     Enums: {
       session_status: "not_started" | "in_progress" | "complete" | "locked"

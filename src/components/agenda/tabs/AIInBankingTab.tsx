@@ -32,9 +32,9 @@ const AIInBankingTab = () => {
               </div>
             </AccordionTrigger>
             <AccordionContent className="text-muted-foreground">
-              <img 
-                src={aiModelTypesImage} 
-                alt="AI Model Types hierarchy showing AI, Machine Learning, Deep Learning, Generative AI, and Large Language Models as nested layers with increasing complexity" 
+              <img
+                src={aiModelTypesImage}
+                alt="AI Model Types hierarchy showing AI, Machine Learning, Deep Learning, Generative AI, and Large Language Models as nested layers with increasing complexity"
                 className="w-full rounded-lg"
               />
             </AccordionContent>
@@ -60,7 +60,7 @@ const AIInBankingTab = () => {
                   <p className="text-sm mb-2">AI that generates unique content—research summaries, documents, presentations, and more.</p>
                   <p className="text-xs text-primary italic">Example: "Draft a policy summary"</p>
                 </div>
-                
+
                 <div className="p-4 bg-muted/30 rounded-lg border border-border">
                   <div className="flex items-center gap-2 mb-2">
                     <Lightbulb className="h-4 w-4 text-primary" />
@@ -69,7 +69,7 @@ const AIInBankingTab = () => {
                   <p className="text-sm mb-2">AI that helps you make decisions but relies on you to "pull the trigger." It recommends; you act.</p>
                   <p className="text-xs text-primary italic">Example: "Recommend next best action"</p>
                 </div>
-                
+
                 <div className="p-4 bg-muted/30 rounded-lg border border-border">
                   <div className="flex items-center gap-2 mb-2">
                     <Bot className="h-4 w-4 text-primary" />
@@ -79,7 +79,7 @@ const AIInBankingTab = () => {
                   <p className="text-xs text-primary italic">Example: "Execute approved workflow"</p>
                 </div>
               </div>
-              
+
               <div className="mt-5 p-3 bg-primary/5 rounded-lg border border-primary/20">
                 <p className="text-sm">
                   <span className="font-medium text-foreground">Note:</span> People define "agent" differently. Focus on the value delivered, not the label used.
@@ -100,7 +100,7 @@ const AIInBankingTab = () => {
             </AccordionTrigger>
             <AccordionContent className="text-muted-foreground">
               <p className="mb-4 text-sm">Where most community banks stand today with AI adoption:</p>
-              
+
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <span className="h-2 w-2 rounded-full bg-primary mt-2 shrink-0"></span>
@@ -138,7 +138,7 @@ const AIInBankingTab = () => {
             </AccordionTrigger>
             <AccordionContent className="text-muted-foreground">
               <p className="mb-4 text-sm">A snapshot of AI tool adoption across community banks:</p>
-              
+
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <span className="h-2 w-2 rounded-full bg-primary mt-2 shrink-0"></span>

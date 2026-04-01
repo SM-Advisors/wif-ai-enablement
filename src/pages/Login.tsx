@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
-import bankMiamiLogo from "@/assets/bankmiami-logo.png";
+import smAdvisorsLogo from "@/assets/sm-advisors-logo-new.webp";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -23,14 +23,12 @@ const Login = () => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
     const { error } = await signIn(email, password);
-    
     if (error) {
       setError(error.message);
       setIsLoading(false);
     } else {
-      navigate("/");
+      navigate("/curriculum");
     }
   };
 
@@ -39,9 +37,7 @@ const Login = () => {
     setError("");
     setSuccess("");
     setIsLoading(true);
-
     const { error } = await signUp(email, password, fullName);
-    
     if (error) {
       setError(error.message);
     } else {
@@ -54,24 +50,24 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-primary flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo */}
         <div className="flex justify-center">
           <img
-            src={bankMiamiLogo}
-            alt="BankMiami Logo"
-            className="h-20 w-auto object-contain"
+            src={smAdvisorsLogo}
+            alt="SM Advisors"
+            className="h-12 w-auto object-contain brightness-0 invert"
           />
         </div>
 
-        <Card className="border-0 shadow-xl">
+        <Card className="border-0 shadow-2xl">
           <CardHeader className="text-center space-y-2 pb-4">
             <CardTitle className="text-xl font-semibold">
-              Lite AIMS Curriculum
+              AI Enablement for Women in Finance
             </CardTitle>
             <CardDescription>
-              4-Session AI Governance Program
+              Sign in to access the curriculum
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -107,13 +103,9 @@ const Login = () => {
                       autoComplete="current-password"
                     />
                   </div>
-                  {error && (
-                    <p className="text-sm text-destructive">{error}</p>
-                  )}
-                  <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90" disabled={isLoading}>
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700 text-white" disabled={isLoading}>
+                    {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                     Sign In
                   </Button>
                 </form>
@@ -157,16 +149,10 @@ const Login = () => {
                       autoComplete="new-password"
                     />
                   </div>
-                  {error && (
-                    <p className="text-sm text-destructive">{error}</p>
-                  )}
-                  {success && (
-                    <p className="text-sm text-green-600">{success}</p>
-                  )}
-                  <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90" disabled={isLoading}>
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  {success && <p className="text-sm text-green-600">{success}</p>}
+                  <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700 text-white" disabled={isLoading}>
+                    {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                     Create Account
                   </Button>
                 </form>
@@ -175,8 +161,8 @@ const Login = () => {
           </CardContent>
         </Card>
 
-        <p className="text-center text-primary-foreground/60 text-xs">
-          Feb 10–19, 2026 • SM Advisors
+        <p className="text-center text-slate-400 text-xs">
+          Powered by SM Advisors • Your Partner in AI Enablement
         </p>
       </div>
     </div>

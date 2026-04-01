@@ -1,57 +1,29 @@
 import { useCallback, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { SESSION_CONTENT } from "@/data/curriculumContent";
 import { toast } from "@/hooks/use-toast";
 
 interface Session {
-  id: string;
+  title: string;
+  theme?: string;
+  outcomes?: string[];
+  topics?: string[];
+  agenda?: string[];
+  homework?: string[];
   session_number: number;
-  date: string;
   duration_minutes: number;
-  focus: string;
 }
 
 interface SessionNote {
-  status: string;
-  trainer_notes: string | null;
-  client_notes: string | null;
-  decisions: string | null;
-  action_items: string | null;
-  risks_open_questions: string | null;
+  status?: string;
+  trainer_notes?: string | null;
+  client_notes?: string | null;
+  decisions?: string | null;
+  action_items?: string | null;
+  risks_open_questions?: string | null;
 }
 
 interface InstructorContent {
-  notes_markdown: string | null;
+  notes_markdown?: string | null;
 }
-
-interface InstructorFile {
-  file_name: string;
-  file_path: string;
-  file_type: string;
-}
-
-interface InstructorLink {
-  title: string;
-  url: string;
-}
-
-type SessionContentItem = {
-  title: string;
-  focus: string;
-  purpose: string;
-  howSessionIsRun: string[];
-  deliverables: string[];
-  homeworkBank?: string[];
-  prepSM?: string[];
-  closeOut?: string;
-};
-
-const sessionContentMap: Record<number, SessionContentItem> = {
-  1: SESSION_CONTENT.session1,
-  2: SESSION_CONTENT.session2,
-  3: SESSION_CONTENT.session3,
-  4: SESSION_CONTENT.session4,
-};
 
 const statusLabels: Record<string, string> = {
   not_started: "Not Started",
@@ -100,110 +72,46 @@ const markdownToHtml = (md: string) => {
   return `<p>${html}</p>`;
 };
 
+const formatArray = (items?: string[]) =>
+  items && items.length > 0 ? items : [];
+
 export const useExportCurriculumPdf = () => {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportPdf = useCallback(
     async (
+      programName: string,
       sessions: Session[],
-      sessionNotes: Record<string, SessionNote>,
-      engagementTitle: string
+      sessionNotes: SessionNote[],
+      instructorContent?: Record<string, string>
     ) => {
       setIsExporting(true);
       try {
-        // Fetch all instructor content in parallel
-        const sessionIds = sessions.map((s) => s.id);
-        const [contentRes, filesRes, linksRes] = await Promise.all([
-          supabase
-            .from("instructor_session_content")
-            .select("session_id, notes_markdown")
-            .in("session_id", sessionIds),
-          supabase
-            .from("instructor_session_files")
-            .select("session_id, file_name, file_path, file_type")
-            .in("session_id", sessionIds)
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("instructor_session_links")
-            .select("session_id, title, url")
-            .in("session_id", sessionIds)
-            .order("created_at", { ascending: false }),
-        ]);
-
-        const contentBySession: Record<string, InstructorContent> = {};
-        contentRes.data?.forEach((c) => {
-          contentBySession[c.session_id] = c;
+        const today = new Date().toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
         });
 
-        const filesBySession: Record<string, InstructorFile[]> = {};
-        filesRes.data?.forEach((f) => {
-          if (!filesBySession[f.session_id]) filesBySession[f.session_id] = [];
-          filesBySession[f.session_id].push(f);
-        });
-
-        const linksBySession: Record<string, InstructorLink[]> = {};
-        linksRes.data?.forEach((l) => {
-          if (!linksBySession[l.session_id]) linksBySession[l.session_id] = [];
-          linksBySession[l.session_id].push(l);
-        });
+        const listItems = (items?: string[]) =>
+          formatArray(items).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 
         // Build HTML for each session
         const sessionsHtml = sessions
           .map((session, idx) => {
-            const content = sessionContentMap[session.session_number];
-            if (!content) return "";
-            const note = sessionNotes[session.id];
-            const instructorContent = contentBySession[session.id];
-            const instructorFiles = filesBySession[session.id] || [];
-            const instructorLinks = linksBySession[session.id] || [];
             const pageBreak = idx > 0 ? "page-break" : "";
+            const note = sessionNotes[idx];
+            const instructorNotes = instructorContent ? instructorContent[`session_${session.session_number}`] : null;
 
             const status = note?.status || "not_started";
 
-            const listItems = (items: string[]) =>
-              items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-
             // Instructor notes section
             let instructorSection = "";
-            const hasInstructorContent =
-              instructorContent?.notes_markdown?.trim() ||
-              instructorFiles.length > 0 ||
-              instructorLinks.length > 0;
-
-            if (hasInstructorContent) {
-              let notesHtml = "";
-              if (instructorContent?.notes_markdown?.trim()) {
-                notesHtml = `<div class="instructor-notes-text">${markdownToHtml(instructorContent.notes_markdown)}</div>`;
-              }
-
-              let filesHtml = "";
-              if (instructorFiles.length > 0) {
-                const fileItems = instructorFiles
-                  .map((f) => {
-                    const url = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/instructor-files/${f.file_path}`;
-                    return `<li><a href="${url}" target="_blank">${escapeHtml(f.file_name)}</a></li>`;
-                  })
-                  .join("");
-                filesHtml = `<div class="subsection"><h4>📎 Attachments</h4><ul>${fileItems}</ul></div>`;
-              }
-
-              let linksHtml = "";
-              if (instructorLinks.length > 0) {
-                const linkItems = instructorLinks
-                  .map(
-                    (l) =>
-                      `<li><a href="${escapeHtml(l.url)}" target="_blank">${escapeHtml(l.title)}</a></li>`
-                  )
-                  .join("");
-                linksHtml = `<div class="subsection"><h4>🔗 Links</h4><ul>${linkItems}</ul></div>`;
-              }
-
+            if (instructorNotes?.trim()) {
               instructorSection = `
                 <div class="section instructor-section">
                   <h3>📝 Instructor Notes</h3>
-                  ${notesHtml}
-                  ${filesHtml}
-                  ${linksHtml}
+                  <div class="instructor-notes-text">${markdownToHtml(instructorNotes)}</div>
                 </div>`;
             }
 
@@ -224,63 +132,57 @@ export const useExportCurriculumPdf = () => {
                     `<div class="note-field"><h4>${f.label}</h4><p>${escapeHtml(f.value!)}</p></div>`
                 )
                 .join("");
-              sessionNotesSection = `<div class="section""><h3>Session Notes</h3>${fieldsHtml}</div>`;
+              sessionNotesSection = `<div class="section"><h3>Session Notes</h3>${fieldsHtml}</div>`;
             }
+
+            const outcomes = listItems(session.outcomes);
+            const topics = listItems(session.topics);
+            const agenda = listItems(session.agenda);
+            const homework = listItems(session.homework);
 
             return `
             <div class="session-page ${pageBreak}">
               <div class="session-header">
                 <div class="session-title-row">
-                  <h2>${escapeHtml(content.title)}</h2>
-                  <span class="status-badge status-${status}">${statusLabels[status] || status}</span>
+                  <h2>${escapeHtml(session.title)}</h2>
+                  <span class="status-badge status-${status}">Session ${session.session_number}</span>
                 </div>
-                <p class="session-focus">${escapeHtml(content.focus)}</p>
+                ${session.theme ? `<p class="session-focus">${escapeHtml(session.theme)}</p>` : ""}
               </div>
 
-              <div class="section">
-                <h3>Purpose</h3>
-                <p>${escapeHtml(content.purpose)}</p>
-              </div>
+              ${session.outcomes && session.outcomes.length > 0 ? `
+                <div class="section">
+                  <h3>Learning Outcomes</h3>
+                  <ul>${outcomes}</ul>
+                </div>
+              ` : ""}
 
-              <div class="section">
-                <h3>How the Session Is Run</h3>
-                <ol>${listItems(content.howSessionIsRun)}</ol>
-              </div>
+              ${session.topics && session.topics.length > 0 ? `
+                <div class="section">
+                  <h3>Topics</h3>
+                  <ul>${topics}</ul>
+                </div>
+              ` : ""}
 
-              <div class="section">
-                <h3>Deliverables / Artifacts</h3>
-                <ul class="check-list">${listItems(content.deliverables)}</ul>
-              </div>
+              ${session.agenda && session.agenda.length > 0 ? `
+                <div class="section">
+                  <h3>Agenda</h3>
+                  <ol>${agenda}</ol>
+                </div>
+              ` : ""}
 
-              ${
-                content.homeworkBank
-                  ? `<div class="section"><h3>Homework (Bank)</h3><ul>${listItems(content.homeworkBank)}</ul></div>`
-                  : ""
-              }
-
-              ${
-                content.prepSM
-                  ? `<div class="section"><h3>Prep (SM Advisors)</h3><ul>${listItems(content.prepSM)}</ul></div>`
-                  : ""
-              }
-
-              ${
-                content.closeOut
-                  ? `<div class="section closeout"><h3>Close-Out</h3><p>${escapeHtml(content.closeOut)}</p></div>`
-                  : ""
-              }
+              ${session.homework && session.homework.length > 0 ? `
+                <div class="section">
+                  <h3>Homework</h3>
+                  <ul>${homework}</ul>
+                </div>
+              ` : ""}
 
               ${instructorSection}
               ${sessionNotesSection}
             </div>`;
           })
           .join("");
-
-        const today = new Date().toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        });
 
         const printWindow = window.open("", "_blank");
         if (!printWindow) {
@@ -296,7 +198,7 @@ export const useExportCurriculumPdf = () => {
         printWindow.document.write(`<!DOCTYPE html>
 <html>
 <head>
-  <title>${escapeHtml(engagementTitle)} - Curriculum Report</title>
+  <title>${escapeHtml(programName)} - Curriculum</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -337,7 +239,7 @@ export const useExportCurriculumPdf = () => {
       font-weight: 600;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #d4826a;
+      color: #ea6a2f;
       margin-bottom: 40px;
     }
 
@@ -358,7 +260,7 @@ export const useExportCurriculumPdf = () => {
     .cover-divider {
       width: 80px;
       height: 3px;
-      background: #d4826a;
+      background: #ea6a2f;
       margin: 0 auto 48px;
     }
 
@@ -407,12 +309,9 @@ export const useExportCurriculumPdf = () => {
       text-transform: uppercase;
       letter-spacing: 0.5px;
       white-space: nowrap;
+      background: #ea6a2f;
+      color: #fff;
     }
-
-    .status-not_started { background: #e5e7eb; color: #6b7280; }
-    .status-in_progress { background: #dbeafe; color: #2563eb; }
-    .status-complete { background: #d1fae5; color: #059669; }
-    .status-locked { background: #fef3c7; color: #d97706; }
 
     /* Sections */
     .section {
@@ -425,7 +324,7 @@ export const useExportCurriculumPdf = () => {
       font-weight: 700;
       color: #1a1a2e;
       padding-bottom: 6px;
-      border-bottom: 2px solid #d4826a;
+      border-bottom: 2px solid #ea6a2f;
       margin-bottom: 10px;
     }
 
@@ -443,9 +342,6 @@ export const useExportCurriculumPdf = () => {
       margin-bottom: 5px;
       white-space: pre-line;
     }
-
-    .check-list { list-style-type: '✓  '; }
-    .check-list li { padding-left: 4px; }
 
     /* Instructor notes */
     .instructor-section {
@@ -475,7 +371,7 @@ export const useExportCurriculumPdf = () => {
     }
 
     .instructor-notes-text .md-quote {
-      border-left: 3px solid #d4826a;
+      border-left: 3px solid #ea6a2f;
       padding-left: 10px;
       color: #5b6770;
       font-style: italic;
@@ -487,11 +383,6 @@ export const useExportCurriculumPdf = () => {
       border-top: 1px solid #e5e7eb;
       margin: 12px 0;
     }
-
-    .subsection { margin-top: 12px; }
-    .subsection h4 { font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #1a1a2e; }
-    .subsection ul { padding-left: 18px; }
-    .subsection a { color: #d4826a; text-decoration: underline; }
 
     /* Session notes */
     .note-field {
@@ -513,16 +404,6 @@ export const useExportCurriculumPdf = () => {
 
     .note-field p { color: #374151; white-space: pre-line; }
 
-    /* Close-out */
-    .closeout {
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      border-radius: 8px;
-      padding: 16px 20px;
-    }
-
-    .closeout h3 { border-bottom-color: #22c55e; }
-
     /* Footer */
     .doc-footer {
       text-align: center;
@@ -539,11 +420,11 @@ export const useExportCurriculumPdf = () => {
   <div class="cover">
     <div class="cover-logo">SM Advisors</div>
     <h1>Curriculum Report</h1>
-    <p class="subtitle">${escapeHtml(engagementTitle)}</p>
+    <p class="subtitle">${escapeHtml(programName)}</p>
     <div class="cover-divider"></div>
     <div class="cover-meta">
       <p>Prepared: <strong>${today}</strong></p>
-      <p>${sessions.length} Sessions · ${sessions.map((s) => formatDate(s.date)).join(" · ")}</p>
+      <p>${sessions.length} Session${sessions.length !== 1 ? "s" : ""}</p>
     </div>
   </div>
 

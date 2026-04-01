@@ -76,8 +76,7 @@ const FrameworksTab = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-4 text-sm">
-                ISO/IEC 42001 is the international standard for establishing an AI Management System (AIMS) 
-                that governs how AI is designed, used, and overseen across its lifecycle.
+                ISO/IEC 42001 is the international standard for establishing an AI Management System (AIMS) that governs how AI is designed, used, and overseen across its lifecycle.
               </AccordionContent>
             </AccordionItem>
 
@@ -88,8 +87,7 @@ const FrameworksTab = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-4 text-sm">
-                ISO/IEC 42001 provides a management-owned governance structure for AI. It clarifies 
-                decision rights, risk ownership, accountability, and assurance.
+                ISO/IEC 42001 provides a management-owned governance structure for AI. It clarifies decision rights, risk ownership, accountability, and assurance.
               </AccordionContent>
             </AccordionItem>
 
@@ -102,9 +100,9 @@ const FrameworksTab = () => {
                 </div>
               </DialogTrigger>
               <DialogContent className="max-w-5xl">
-                <img 
-                  src={aimsDashboard} 
-                  alt="AIMS Dashboard - AI Governance at a glance" 
+                <img
+                  src={aimsDashboard}
+                  alt="AIMS Dashboard - AI Governance at a glance"
                   className="w-full h-auto rounded-lg"
                 />
               </DialogContent>
@@ -120,8 +118,7 @@ const FrameworksTab = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-4 text-sm">
-                Establishes the organizational context for AI, including use cases, stakeholders, 
-                and the defined scope of AI governance.
+                Establishes the organizational context for AI, including use cases, stakeholders, and the defined scope of AI governance.
               </AccordionContent>
             </AccordionItem>
 
@@ -132,8 +129,7 @@ const FrameworksTab = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-4 text-sm">
-                Requires executive ownership, a formal AI policy, and clearly assigned 
-                roles and responsibilities for AI oversight.
+                Requires executive ownership, a formal AI policy, and clearly assigned roles and responsibilities for AI oversight.
               </AccordionContent>
             </AccordionItem>
 
@@ -144,8 +140,7 @@ const FrameworksTab = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-4 text-sm">
-                Introduces AI risk assessment, impact assessment, and risk-based planning 
-                to ensure AI is deployed deliberately.
+                Introduces AI risk assessment, impact assessment, and risk-based planning to ensure AI is deployed deliberately.
               </AccordionContent>
             </AccordionItem>
 
@@ -156,8 +151,7 @@ const FrameworksTab = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-4 text-sm">
-                Covers resources, skills, awareness, and documentation needed to 
-                operate and govern AI systems effectively.
+                Covers resources, skills, awareness, and documentation needed to operate and govern AI systems effectively.
               </AccordionContent>
             </AccordionItem>
 
@@ -168,8 +162,7 @@ const FrameworksTab = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-4 text-sm">
-                Applies controls across the AI lifecycle, including development, deployment, 
-                and third-party AI use.
+                Applies controls across the AI lifecycle, including development, deployment, and third-party AI use.
               </AccordionContent>
             </AccordionItem>
 
@@ -180,8 +173,7 @@ const FrameworksTab = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-4 text-sm">
-                Requires monitoring, internal audits, and management review to assess 
-                AI performance and governance effectiveness.
+                Requires monitoring, internal audits, and management review to assess AI performance and governance effectiveness.
               </AccordionContent>
             </AccordionItem>
 
@@ -192,8 +184,7 @@ const FrameworksTab = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-4 text-sm">
-                Drives continual improvement through corrective actions and 
-                increasing governance maturity over time.
+                Drives continual improvement through corrective actions and increasing governance maturity over time.
               </AccordionContent>
             </AccordionItem>
           </Accordion>

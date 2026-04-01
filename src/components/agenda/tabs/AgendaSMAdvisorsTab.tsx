@@ -294,7 +294,7 @@ const AgendaSMAdvisorsTab = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="ml-20 space-y-4">
                 <div>
                   <h4 className="font-medium text-foreground text-sm mb-2">Activities:</h4>
@@ -333,7 +333,7 @@ const AgendaSMAdvisorsTab = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="ml-20 space-y-4">
                 <div>
                   <h4 className="font-medium text-foreground text-sm mb-2">Activities:</h4>
@@ -373,7 +373,7 @@ const AgendaSMAdvisorsTab = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="ml-20 space-y-4">
                 <div>
                   <h4 className="font-medium text-foreground text-sm mb-2">Activities:</h4>
@@ -616,7 +616,7 @@ const AgendaSMAdvisorsTab = () => {
                   <h3 className="text-lg font-semibold text-foreground">Strategic Alignment & Readiness</h3>
                 </div>
               </div>
-              
+
               <div className="ml-20 space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-3">
@@ -656,7 +656,7 @@ const AgendaSMAdvisorsTab = () => {
                   <h3 className="text-lg font-semibold text-foreground">Opportunity Identification & Prioritization</h3>
                 </div>
               </div>
-              
+
               <div className="ml-20 space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-3">
@@ -696,7 +696,7 @@ const AgendaSMAdvisorsTab = () => {
                   <h3 className="text-lg font-semibold text-foreground">Roadmap & Strategic Guardrails</h3>
                 </div>
               </div>
-              
+
               <div className="ml-20 space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-3">
