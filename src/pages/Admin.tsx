@@ -71,24 +71,8 @@ interface LinkItem {
   url: string;
 }
 
-interface Program {
-  id: string;
-  name: string;
-  short_summary: string;
-  narrative_arc: string;
-}
-
-interface ProgramSession {
-  id: string;
-  session_number: number;
-  title: string;
-  theme: string;
-  theme_description: string;
-  outcomes: string[];
-  topics: string[];
-  agenda: string[];
-  homework: string[];
-}
+// Program content is managed via static data - no DB table exists
+// Remove ProgramSession and Program interfaces
 
 const Admin = () => {
   const { isTrainer, isLoading: authLoading } = useAuth();
