@@ -29,6 +29,7 @@ import {
   FileText,
   ExternalLink,
   Book,
+  Bell,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
