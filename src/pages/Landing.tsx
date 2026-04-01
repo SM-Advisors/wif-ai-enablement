@@ -57,34 +57,6 @@ const Landing = () => {
     setLoading(false);
   }, []);
 
-        if (!programData) {
-          setProgram({
-            name: PROGRAM.name,
-            short_summary: PROGRAM.shortSummary,
-            narrative_arc: PROGRAM.narrativeArc,
-          });
-        }
-      } catch (err) {
-        // Fallback to static content
-        setProgram({ name: PROGRAM.name, short_summary: PROGRAM.shortSummary, narrative_arc: PROGRAM.narrativeArc });
-        setSessions(SESSION_CONTENT.map(s => ({
-          session_number: s.sessionNumber,
-          title: s.title,
-          theme: s.theme,
-          theme_description: s.themeDescription,
-          outcomes: s.outcomes,
-          topics: { sections: s.topics },
-          agenda: s.agenda,
-          homework: s.homework,
-          duration_minutes: s.durationMinutes,
-        })));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   const toggleSession = (num: number) => {
     setExpandedSessions(prev => {
