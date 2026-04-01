@@ -22,16 +22,11 @@ import { useExportCurriculumPdf } from "@/hooks/useExportCurriculumPdf";
 interface Session {
   id: string;
   session_number: number;
-  title: string;
-  theme: string;
-  theme_description: string | null;
-  outcomes: any; // JSON array
-  topics: any; // JSON array
-  agenda: any; // JSON array
-  homework: any; // JSON array
+  focus: string;
   duration_minutes: number;
-  program_id: string;
-  updated_at: string;
+  engagement_id: string;
+  date: string;
+  created_at: string;
 }
 
 interface SessionNote {
