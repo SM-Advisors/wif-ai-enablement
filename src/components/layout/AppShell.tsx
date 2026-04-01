@@ -1,6 +1,7 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Home, Shield } from "lucide-react";
+import { User, LogOut, Home, Shield, Bell } from "lucide-react";
 import smAdvisorsLogo from "@/assets/sm-advisors-logo-new.webp";
 
 interface AppShellProps {
@@ -28,6 +29,26 @@ const AppShell = ({ children }: AppShellProps) => {
   };
 
   const isAdminRoute = location.pathname === "/admin";
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!isTrainer) return;
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("is_read", false);
+      setUnreadCount(count ?? 0);
+    };
+    fetchUnread();
+    const channel = supabase
+      .channel("notifications-count")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => fetchUnread())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, () => fetchUnread())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isTrainer]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -66,7 +87,7 @@ const AppShell = ({ children }: AppShellProps) => {
                 <Button
                   variant={isAdminRoute ? "default" : "outline"}
                   size="sm"
-                  className={`gap-2 ${
+                  className={`gap-2 relative ${
                     isAdminRoute
                       ? "bg-slate-800 hover:bg-slate-900 text-white"
                       : "border-slate-300 text-slate-600 hover:bg-slate-50"
@@ -74,6 +95,11 @@ const AppShell = ({ children }: AppShellProps) => {
                 >
                   <Shield className="h-4 w-4" />
                   <span className="hidden sm:inline">{isAdminRoute ? "Exit Admin" : "Admin Panel"}</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
                 </Button>
               </Link>
             )}
