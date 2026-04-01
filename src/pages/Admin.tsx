@@ -166,7 +166,7 @@ const InstructorNotesAdmin = () => {
             onClick={() => setSelectedSession(s.id)}
             className={selectedSession === s.id ? "bg-orange-600 hover:bg-orange-700" : ""}
           >
-            Session {s.session_number}: {s.title}
+            Session {s.session_number}: {s.focus}
           </Button>
         ))}
       </div>
