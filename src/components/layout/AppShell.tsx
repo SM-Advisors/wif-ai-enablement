@@ -10,8 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Home, BookOpen, Shield } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { User, LogOut, Home, Shield } from "lucide-react";
 import smAdvisorsLogo from "@/assets/sm-advisors-logo-new.webp";
 
 interface AppShellProps {
@@ -28,18 +27,14 @@ const AppShell = ({ children }: AppShellProps) => {
     navigate("/");
   };
 
-  const navItems = [
-    { path: "/", label: "Overview", icon: Home },
-    { path: "/curriculum", label: "Curriculum", icon: BookOpen },
-    ...(isTrainer ? [{ path: "/admin", label: "Admin", icon: Shield }] : []),
-  ];
+  const isAdminRoute = location.pathname === "/admin";
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
         <div className="container flex h-14 md:h-16 items-center justify-between px-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+          <Link to="/program" className="flex items-center">
             <img
               src={smAdvisorsLogo}
               alt="SM Advisors"
@@ -47,35 +42,43 @@ const AppShell = ({ children }: AppShellProps) => {
             />
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-orange-50 text-orange-600"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          {/* Nav + Actions */}
+          <div className="flex items-center gap-2">
+            {/* Program link */}
+            <Link to="/program">
+              <Button
+                variant={location.pathname.startsWith("/program") || location.pathname.startsWith("/session") ? "default" : "ghost"}
+                size="sm"
+                className={`gap-2 ${
+                  location.pathname.startsWith("/program") || location.pathname.startsWith("/session")
+                    ? "bg-orange-500 hover:bg-orange-600 text-white"
+                    : "text-slate-600"
+                }`}
+              >
+                <Home className="h-4 w-4" />
+                <span className="hidden sm:inline">Program</span>
+              </Button>
+            </Link>
+
+            {/* Admin Panel toggle */}
+            {isTrainer && (
+              <Link to={isAdminRoute ? "/program" : "/admin"}>
+                <Button
+                  variant={isAdminRoute ? "default" : "outline"}
+                  size="sm"
+                  className={`gap-2 ${
+                    isAdminRoute
+                      ? "bg-slate-800 hover:bg-slate-900 text-white"
+                      : "border-slate-300 text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* User Menu */}
-          <div className="flex items-center gap-2">
-            {isTrainer && (
-              <Badge variant="outline" className="hidden sm:inline-flex border-orange-200 text-orange-600">
-                Admin
-              </Badge>
+                  <Shield className="h-4 w-4" />
+                  <span className="hidden sm:inline">{isAdminRoute ? "Exit Admin" : "Admin Panel"}</span>
+                </Button>
+              </Link>
             )}
+
+            {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100">
@@ -102,28 +105,6 @@ const AppShell = ({ children }: AppShellProps) => {
             </DropdownMenu>
           </div>
         </div>
-
-        {/* Mobile Nav */}
-        <nav className="md:hidden flex items-center justify-center gap-1 px-4 pb-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  isActive
-                    ? "bg-orange-50 text-orange-600"
-                    : "text-slate-500 hover:bg-slate-100"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
       </header>
 
       <main className="flex-1">{children}</main>
