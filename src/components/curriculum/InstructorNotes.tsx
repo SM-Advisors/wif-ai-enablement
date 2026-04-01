@@ -260,9 +260,15 @@ const InstructorNotes = ({ sessionId }: InstructorNotesProps) => {
               Notes
             </Label>
             <RichTextEditor
-              content={notes}
+              value={notes}
               onChange={handleNotesChange}
-              onPaste={(e) => {
+            />
+            {/* Image paste handling */}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
                 const items = (e as any).clipboardData?.items;
                 if (items) {
                   for (const item of items) {

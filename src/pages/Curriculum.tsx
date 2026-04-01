@@ -411,7 +411,7 @@ const Curriculum = () => {
               variant="outline"
               size="sm"
               onClick={() =>
-                exportPdf(sessions, sessionNotes, "Women in Finance Curriculum")
+                exportPdf("Women in Finance Curriculum", sessions, sessionNotes)
               }
               disabled={isExporting || sessions.length === 0}
               className="gap-2 bg-white/15 border-white/40 text-white hover:bg-white/25 hover:text-white"
