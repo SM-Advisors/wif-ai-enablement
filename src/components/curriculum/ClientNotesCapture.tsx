@@ -27,7 +27,7 @@ const ClientNotesCapture = ({ sessionId }: ClientNotesCaptureProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [noteId, setNoteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch existing notes and attachments
   useEffect(() => {
