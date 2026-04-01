@@ -260,21 +260,8 @@ const InstructorNotes = ({ sessionId }: InstructorNotesProps) => {
               Notes
             </Label>
             <RichTextEditor
-              content={notes}
+              value={notes}
               onChange={handleNotesChange}
-              onPaste={(e) => {
-                const items = (e as any).clipboardData?.items;
-                if (items) {
-                  for (const item of items) {
-                    if (item.type.startsWith("image/")) {
-                      const file = item.getAsFile();
-                      if (file) uploadFile(file);
-                      break;
-                    }
-                  }
-                }
-              }}
-              placeholder="Add notes for participants... You can paste screenshots (Ctrl+V / Cmd+V)"
             />
           </div>
         ) : (

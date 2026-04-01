@@ -37,64 +37,26 @@ const Landing = () => {
   const [expandedSessions, setExpandedSessions] = useState<Set<number>>(new Set([1]));
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data: programData } = await supabase
-          .from("program")
-          .select("name, short_summary, narrative_arc")
-          .single();
-
-        const { data: sessionsData } = await supabase
-          .from("sessions")
-          .select("session_number, title, theme, theme_description, outcomes, topics, agenda, homework, duration_minutes")
-          .order("session_number");
-
-        if (programData) setProgram(programData);
-        if (sessionsData && sessionsData.length > 0) {
-          setSessions(sessionsData as SessionData[]);
-        } else {
-          // Fallback to static content
-          setSessions(SESSION_CONTENT.map(s => ({
-            session_number: s.sessionNumber,
-            title: s.title,
-            theme: s.theme,
-            theme_description: s.themeDescription,
-            outcomes: s.outcomes,
-            topics: { sections: s.topics },
-            agenda: s.agenda,
-            homework: s.homework,
-            duration_minutes: s.durationMinutes,
-          })));
-        }
-
-        if (!programData) {
-          setProgram({
-            name: PROGRAM.name,
-            short_summary: PROGRAM.shortSummary,
-            narrative_arc: PROGRAM.narrativeArc,
-          });
-        }
-      } catch (err) {
-        // Fallback to static content
-        setProgram({ name: PROGRAM.name, short_summary: PROGRAM.shortSummary, narrative_arc: PROGRAM.narrativeArc });
-        setSessions(SESSION_CONTENT.map(s => ({
-          session_number: s.sessionNumber,
-          title: s.title,
-          theme: s.theme,
-          theme_description: s.themeDescription,
-          outcomes: s.outcomes,
-          topics: { sections: s.topics },
-          agenda: s.agenda,
-          homework: s.homework,
-          duration_minutes: s.durationMinutes,
-        })));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    // Use static content since DB doesn't have program table or session content columns
+    setProgram({
+      name: PROGRAM.name,
+      short_summary: PROGRAM.shortSummary,
+      narrative_arc: PROGRAM.narrativeArc,
+    });
+    setSessions(SESSION_CONTENT.map(s => ({
+      session_number: s.sessionNumber,
+      title: s.title,
+      theme: s.theme,
+      theme_description: s.themeDescription,
+      outcomes: s.outcomes,
+      topics: { sections: s.topics },
+      agenda: s.agenda,
+      homework: s.homework,
+      duration_minutes: s.durationMinutes,
+    })));
+    setLoading(false);
   }, []);
+
 
   const toggleSession = (num: number) => {
     setExpandedSessions(prev => {

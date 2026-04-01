@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SESSION_CONTENT } from "@/data/curriculumContent";
 import { useAuth } from "@/contexts/AuthContext";
 import AppShell from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -22,16 +23,11 @@ import { useExportCurriculumPdf } from "@/hooks/useExportCurriculumPdf";
 interface Session {
   id: string;
   session_number: number;
-  title: string;
-  theme: string;
-  theme_description: string | null;
-  outcomes: any; // JSON array
-  topics: any; // JSON array
-  agenda: any; // JSON array
-  homework: any; // JSON array
+  focus: string;
   duration_minutes: number;
-  program_id: string;
-  updated_at: string;
+  engagement_id: string;
+  date: string;
+  created_at: string;
 }
 
 interface SessionNote {
@@ -411,7 +407,7 @@ const Curriculum = () => {
               variant="outline"
               size="sm"
               onClick={() =>
-                exportPdf(sessions, sessionNotes, "Women in Finance Curriculum")
+                exportPdf("Women in Finance Curriculum", [], Object.values(sessionNotes))
               }
               disabled={isExporting || sessions.length === 0}
               className="gap-2 bg-white/15 border-white/40 text-white hover:bg-white/25 hover:text-white"
@@ -463,10 +459,7 @@ const Curriculum = () => {
               const files = instructorFiles[session.id] || [];
               const links = instructorLinks[session.id] || [];
 
-              const outcomes = renderJsonArray(session.outcomes);
-              const topics = renderJsonArray(session.topics);
-              const agenda = renderJsonArray(session.agenda);
-              const homework = renderJsonArray(session.homework);
+              const staticSession = SESSION_CONTENT.find(s => s.sessionNumber === session.session_number);
 
               return (
                 <TabsContent
@@ -478,12 +471,12 @@ const Curriculum = () => {
                   <div className="bg-slate-50 rounded-lg border border-slate-200 p-6">
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div className="flex-1">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-2">{session.title}</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2">{staticSession?.title || session.focus}</h2>
                         <p className="text-sm text-slate-600 mb-3">
-                          <strong>Theme:</strong> {session.theme}
+                          <strong>Theme:</strong> {staticSession?.theme || session.focus}
                         </p>
-                        {session.theme_description && (
-                          <p className="text-sm text-slate-700 italic">{session.theme_description}</p>
+                        {staticSession?.themeDescription && (
+                          <p className="text-sm text-slate-700 italic">{staticSession.themeDescription}</p>
                         )}
                       </div>
                       <div className="flex flex-col items-end gap-2">
@@ -515,13 +508,13 @@ const Curriculum = () => {
                     {/* Left Column */}
                     <div className="space-y-6">
                       {/* Outcomes */}
-                      {outcomes.length > 0 && (
+                      {staticSession?.outcomes && staticSession.outcomes.length > 0 && (
                         <div className="border border-slate-200 rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-slate-900 mb-3 pb-2 border-b border-orange-200">
                             Learning Outcomes
                           </h3>
                           <ul className="space-y-2">
-                            {outcomes.map((outcome: string, idx: number) => (
+                            {staticSession.outcomes.map((outcome: string, idx: number) => (
                               <li key={idx} className="flex gap-2 text-sm text-slate-700">
                                 <span className="text-orange-500 font-bold">•</span>
                                 <span>{outcome}</span>
@@ -532,13 +525,13 @@ const Curriculum = () => {
                       )}
 
                       {/* Topics */}
-                      {topics.length > 0 && (
+                      {staticSession?.topics && staticSession.topics.length > 0 && (
                         <div className="border border-slate-200 rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-slate-900 mb-3 pb-2 border-b border-orange-200">
                             Core Topics
                           </h3>
                           <ul className="space-y-2">
-                            {topics.map((topic: string, idx: number) => (
+                            {staticSession.topics.flatMap(section => section.items).map((topic: string, idx: number) => (
                               <li key={idx} className="flex gap-2 text-sm text-slate-700">
                                 <span className="text-orange-500 font-bold">▪</span>
                                 <span>{topic}</span>
@@ -552,16 +545,16 @@ const Curriculum = () => {
                     {/* Right Column */}
                     <div className="space-y-6">
                       {/* Agenda */}
-                      {agenda.length > 0 && (
+                      {staticSession?.agenda && staticSession.agenda.length > 0 && (
                         <div className="border border-slate-200 rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-slate-900 mb-3 pb-2 border-b border-orange-200">
                             Agenda
                           </h3>
                           <ol className="space-y-2">
-                            {agenda.map((item: string, idx: number) => (
+                            {staticSession.agenda.map((item, idx: number) => (
                               <li key={idx} className="flex gap-2 text-sm text-slate-700">
-                                <span className="text-orange-500 font-bold min-w-6">{idx + 1}.</span>
-                                <span>{item}</span>
+                                <span className="text-orange-500 font-bold min-w-6">{item.time}</span>
+                                <span>{item.description}</span>
                               </li>
                             ))}
                           </ol>
@@ -569,13 +562,13 @@ const Curriculum = () => {
                       )}
 
                       {/* Homework */}
-                      {homework.length > 0 && (
+                      {staticSession?.homework && staticSession.homework.length > 0 && (
                         <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-blue-900 mb-3 pb-2 border-b border-blue-200">
                             Follow-Through Work
                           </h3>
                           <ul className="space-y-2">
-                            {homework.map((item: string, idx: number) => (
+                            {staticSession.homework.map((item: string, idx: number) => (
                               <li key={idx} className="flex gap-2 text-sm text-blue-800">
                                 <span className="text-blue-600 font-bold">✓</span>
                                 <span>{item}</span>

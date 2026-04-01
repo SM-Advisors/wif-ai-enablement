@@ -37,13 +37,11 @@ type SessionStatus = "not_started" | "in_progress" | "complete" | "locked";
 interface Session {
   id: string;
   session_number: number;
-  program_id: string;
-  title: string;
-  theme: string;
-  outcomes: string[];
-  topics: string[];
-  agenda: string[];
-  homework: string[];
+  focus: string;
+  duration_minutes: number;
+  engagement_id: string;
+  date: string;
+  created_at: string;
 }
 
 interface SessionNote {
@@ -73,24 +71,8 @@ interface LinkItem {
   url: string;
 }
 
-interface Program {
-  id: string;
-  name: string;
-  short_summary: string;
-  narrative_arc: string;
-}
-
-interface ProgramSession {
-  id: string;
-  session_number: number;
-  title: string;
-  theme: string;
-  theme_description: string;
-  outcomes: string[];
-  topics: string[];
-  agenda: string[];
-  homework: string[];
-}
+// Program content is managed via static data - no DB table exists
+// Remove ProgramSession and Program interfaces
 
 const Admin = () => {
   const { isTrainer, isLoading: authLoading } = useAuth();
@@ -184,7 +166,7 @@ const InstructorNotesAdmin = () => {
             onClick={() => setSelectedSession(s.id)}
             className={selectedSession === s.id ? "bg-orange-600 hover:bg-orange-700" : ""}
           >
-            Session {s.session_number}: {s.title}
+            Session {s.session_number}: {s.focus}
           </Button>
         ))}
       </div>
@@ -204,7 +186,7 @@ const NotesEditor = ({ sessionId }: { sessionId: string }) => {
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [showLinkForm, setShowLinkForm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -442,8 +424,8 @@ const SessionStatusAdmin = () => {
           <Card key={s.id}>
             <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4">
               <div>
-                <p className="font-medium">Session {s.session_number}: {s.title}</p>
-                <p className="text-sm text-muted-foreground">{s.theme}</p>
+                <p className="font-medium">Session {s.session_number}: {s.focus}</p>
+                <p className="text-sm text-muted-foreground">{s.date}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Select value={current} onValueChange={(v) => updateStatus(s.id, v as SessionStatus)}>
@@ -508,493 +490,19 @@ const UsersAdmin = () => {
 
 /* ─── Program Content Admin ─── */
 const ProgramContentAdmin = () => {
-  const [program, setProgram] = useState<Program | null>(null);
-  const [sessions, setSessions] = useState<ProgramSession[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetch = async () => {
-      const [progRes, sessRes] = await Promise.all([
-        supabase.from("program").select("*").single(),
-        supabase.from("sessions").select("*").order("session_number"),
-      ]);
-      if (progRes.data) setProgram(progRes.data as Program);
-      if (sessRes.data) setSessions(sessRes.data as ProgramSession[]);
-      setIsLoading(false);
-    };
-    fetch();
-  }, []);
-
-  if (isLoading) return <Skeleton className="h-96 w-full" />;
-
   return (
     <div className="space-y-6">
-      {program && <ProgramEditor program={program} onUpdate={setProgram} />}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Sessions</h2>
-        {sessions.map((session) => (
-          <SessionEditor key={session.id} session={session} onUpdate={(updated) => setSessions(sessions.map(s => s.id === updated.id ? updated : s))} />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const ProgramEditor = ({ program, onUpdate }: { program: Program; onUpdate: (p: Program) => void }) => {
-  const [name, setName] = useState(program.name);
-  const [summary, setSummary] = useState(program.short_summary);
-  const [narrative, setNarrative] = useState(program.narrative_arc);
-  const [activeSection, setActiveSection] = useState<"name" | "summary" | "narrative" | null>(null);
-  const [saving, setSaving] = useState<string | null>(null);
-
-  const saveSection = async (section: string, value: string) => {
-    setSaving(section);
-    try {
-      const updateData: any = {};
-      if (section === "name") updateData.name = value;
-      if (section === "summary") updateData.short_summary = value;
-      if (section === "narrative") updateData.narrative_arc = value;
-
-      const { data } = await supabase.from("program").update(updateData).eq("id", program.id).select().single();
-      if (data) {
-        onUpdate(data as Program);
-        setActiveSection(null);
-      }
-    } catch (error) {
-      console.error("Save error:", error);
-    } finally {
-      setSaving(null);
-    }
-  };
-
-  return (
-    <Card className="border-orange-200">
-      <CardHeader className="bg-orange-50">
-        <CardTitle className="text-lg">Program Overview</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 pt-4">
-        {/* Program Name */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Program Name</Label>
-          {activeSection === "name" ? (
-            <div className="flex gap-2">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                size="sm"
-                onClick={() => saveSection("name", name)}
-                disabled={saving === "name"}
-                className="bg-orange-600 hover:bg-orange-700 gap-1"
-              >
-                {saving === "name" && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setName(program.name);
-                  setActiveSection(null);
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-              <p className="text-sm">{program.name}</p>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setActiveSection("name")}
-                className="text-orange-600"
-              >
-                Edit
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Short Summary */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Short Summary</Label>
-          {activeSection === "summary" ? (
-            <div className="flex flex-col gap-2">
-              <Textarea
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                className="min-h-24 text-sm"
-              />
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => saveSection("summary", summary)}
-                  disabled={saving === "summary"}
-                  className="bg-orange-600 hover:bg-orange-700 gap-1"
-                >
-                  {saving === "summary" && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Save
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setSummary(program.short_summary);
-                    setActiveSection(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-start justify-between p-3 bg-slate-50 rounded-lg gap-4">
-              <p className="text-sm text-muted-foreground">{program.short_summary || "No summary"}</p>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setActiveSection("summary")}
-                className="text-orange-600 shrink-0"
-              >
-                Edit
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Narrative Arc */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Narrative Arc</Label>
-          {activeSection === "narrative" ? (
-            <div className="flex flex-col gap-2">
-              <Textarea
-                value={narrative}
-                onChange={(e) => setNarrative(e.target.value)}
-                className="min-h-32 text-sm"
-              />
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => saveSection("narrative", narrative)}
-                  disabled={saving === "narrative"}
-                  className="bg-orange-600 hover:bg-orange-700 gap-1"
-                >
-                  {saving === "narrative" && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Save
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setNarrative(program.narrative_arc);
-                    setActiveSection(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-start justify-between p-3 bg-slate-50 rounded-lg gap-4">
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{program.narrative_arc || "No narrative arc"}</p>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setActiveSection("narrative")}
-                className="text-orange-600 shrink-0"
-              >
-                Edit
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const SessionEditor = ({ session, onUpdate }: { session: ProgramSession; onUpdate: (s: ProgramSession) => void }) => {
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [saving, setSaving] = useState<string | null>(null);
-
-  const [title, setTitle] = useState(session.title);
-  const [theme, setTheme] = useState(session.theme);
-  const [themeDesc, setThemeDesc] = useState(session.theme_description || "");
-  const [outcomes, setOutcomes] = useState(JSON.stringify(session.outcomes || [], null, 2));
-  const [topics, setTopics] = useState(JSON.stringify(session.topics || [], null, 2));
-  const [agenda, setAgenda] = useState(JSON.stringify(session.agenda || [], null, 2));
-  const [homework, setHomework] = useState(JSON.stringify(session.homework || [], null, 2));
-
-  const saveField = async (field: string, value: any) => {
-    setSaving(field);
-    try {
-      const updateData: any = { id: session.id };
-      const parseValue = (v: any) => {
-        if (typeof v === "string" && (field === "outcomes" || field === "topics" || field === "agenda" || field === "homework")) {
-          try {
-            return JSON.parse(v);
-          } catch {
-            console.error("JSON parse error");
-            return [];
-          }
-        }
-        return v;
-      };
-
-      updateData[field] = parseValue(value);
-      const { data } = await supabase.from("sessions").update(updateData).eq("id", session.id).select().single();
-      if (data) {
-        const updated = { ...session, ...data };
-        onUpdate(updated as ProgramSession);
-        setEditingField(null);
-      }
-    } catch (error) {
-      console.error("Save error:", error);
-    } finally {
-      setSaving(null);
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader className="bg-slate-50">
-        <CardTitle className="text-base">Session {session.session_number}: {session.title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 pt-4">
-        {/* Title */}
-        <EditableField
-          label="Title"
-          value={title}
-          onEdit={() => setEditingField("title")}
-          isEditing={editingField === "title"}
-          onChange={setTitle}
-          onSave={() => saveField("title", title)}
-          isSaving={saving === "title"}
-          onCancel={() => {
-            setTitle(session.title);
-            setEditingField(null);
-          }}
-        />
-
-        {/* Theme */}
-        <EditableField
-          label="Theme"
-          value={theme}
-          onEdit={() => setEditingField("theme")}
-          isEditing={editingField === "theme"}
-          onChange={setTheme}
-          onSave={() => saveField("theme", theme)}
-          isSaving={saving === "theme"}
-          onCancel={() => {
-            setTheme(session.theme);
-            setEditingField(null);
-          }}
-        />
-
-        {/* Theme Description */}
-        <EditableField
-          label="Theme Description"
-          value={themeDesc}
-          onEdit={() => setEditingField("theme_description")}
-          isEditing={editingField === "theme_description"}
-          onChange={setThemeDesc}
-          onSave={() => saveField("theme_description", themeDesc)}
-          isSaving={saving === "theme_description"}
-          onCancel={() => {
-            setThemeDesc(session.theme_description || "");
-            setEditingField(null);
-          }}
-          isTextarea
-        />
-
-        {/* Outcomes */}
-        <EditableJSONField
-          label="Outcomes"
-          value={outcomes}
-          onEdit={() => setEditingField("outcomes")}
-          isEditing={editingField === "outcomes"}
-          onChange={setOutcomes}
-          onSave={() => saveField("outcomes", outcomes)}
-          isSaving={saving === "outcomes"}
-          onCancel={() => {
-            setOutcomes(JSON.stringify(session.outcomes || [], null, 2));
-            setEditingField(null);
-          }}
-        />
-
-        {/* Topics */}
-        <EditableJSONField
-          label="Topics"
-          value={topics}
-          onEdit={() => setEditingField("topics")}
-          isEditing={editingField === "topics"}
-          onChange={setTopics}
-          onSave={() => saveField("topics", topics)}
-          isSaving={saving === "topics"}
-          onCancel={() => {
-            setTopics(JSON.stringify(session.topics || [], null, 2));
-            setEditingField(null);
-          }}
-        />
-
-        {/* Agenda */}
-        <EditableJSONField
-          label="Agenda"
-          value={agenda}
-          onEdit={() => setEditingField("agenda")}
-          isEditing={editingField === "agenda"}
-          onChange={setAgenda}
-          onSave={() => saveField("agenda", agenda)}
-          isSaving={saving === "agenda"}
-          onCancel={() => {
-            setAgenda(JSON.stringify(session.agenda || [], null, 2));
-            setEditingField(null);
-          }}
-        />
-
-        {/* Homework */}
-        <EditableJSONField
-          label="Homework"
-          value={homework}
-          onEdit={() => setEditingField("homework")}
-          isEditing={editingField === "homework"}
-          onChange={setHomework}
-          onSave={() => saveField("homework", homework)}
-          isSaving={saving === "homework"}
-          onCancel={() => {
-            setHomework(JSON.stringify(session.homework || [], null, 2));
-            setEditingField(null);
-          }}
-        />
-      </CardContent>
-    </Card>
-  );
-};
-
-interface EditableFieldProps {
-  label: string;
-  value: string;
-  onEdit: () => void;
-  isEditing: boolean;
-  onChange: (value: string) => void;
-  onSave: () => void;
-  isSaving: boolean;
-  onCancel: () => void;
-  isTextarea?: boolean;
-}
-
-const EditableField = ({
-  label,
-  value,
-  onEdit,
-  isEditing,
-  onChange,
-  onSave,
-  isSaving,
-  onCancel,
-  isTextarea,
-}: EditableFieldProps) => {
-  return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">{label}</Label>
-      {isEditing ? (
-        <div className="flex flex-col gap-2">
-          {isTextarea ? (
-            <Textarea
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              className="min-h-24 text-sm"
-            />
-          ) : (
-            <Input value={value} onChange={(e) => onChange(e.target.value)} className="text-sm" />
-          )}
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={onSave}
-              disabled={isSaving}
-              className="bg-orange-600 hover:bg-orange-700 gap-1"
-            >
-              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save
-            </Button>
-            <Button size="sm" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-          <p className="text-sm">{value || "-"}</p>
-          <Button size="sm" variant="ghost" onClick={onEdit} className="text-orange-600">
-            Edit
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-interface EditableJSONFieldProps {
-  label: string;
-  value: string;
-  onEdit: () => void;
-  isEditing: boolean;
-  onChange: (value: string) => void;
-  onSave: () => void;
-  isSaving: boolean;
-  onCancel: () => void;
-}
-
-const EditableJSONField = ({
-  label,
-  value,
-  onEdit,
-  isEditing,
-  onChange,
-  onSave,
-  isSaving,
-  onCancel,
-}: EditableJSONFieldProps) => {
-  return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">{label}</Label>
-      {isEditing ? (
-        <div className="flex flex-col gap-2">
-          <Textarea
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="min-h-32 font-mono text-xs"
-            placeholder='["item1", "item2"]'
-          />
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={onSave}
-              disabled={isSaving}
-              className="bg-orange-600 hover:bg-orange-700 gap-1"
-            >
-              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save
-            </Button>
-            <Button size="sm" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-start justify-between p-3 bg-slate-50 rounded-lg gap-4">
-          <pre className="text-xs text-muted-foreground overflow-auto max-h-32 flex-1">
-            {value}
-          </pre>
-          <Button size="sm" variant="ghost" onClick={onEdit} className="text-orange-600 shrink-0">
-            Edit
-          </Button>
-        </div>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Program Content</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Program content is managed through the static curriculum data.
+            To update program content, edit the curriculum content file directly.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 };

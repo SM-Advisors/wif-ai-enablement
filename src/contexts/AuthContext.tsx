@@ -7,7 +7,6 @@ type UserRole = 'trainer' | 'client';
 interface Profile {
   id: string;
   full_name: string | null;
-  email: string | null;
   role: UserRole;
 }
 
@@ -33,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, full_name, email, role')
+      .select('id, full_name, role')
       .eq('id', userId)
       .single();
     if (error) {

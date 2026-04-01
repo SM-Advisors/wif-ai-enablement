@@ -89,7 +89,7 @@ const AppShell = ({ children }: AppShellProps) => {
                       {profile?.full_name || user?.email}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {profile?.email || user?.email}
+                      {user?.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
