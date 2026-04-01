@@ -424,8 +424,8 @@ const SessionStatusAdmin = () => {
           <Card key={s.id}>
             <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4">
               <div>
-                <p className="font-medium">Session {s.session_number}: {s.title}</p>
-                <p className="text-sm text-muted-foreground">{s.theme}</p>
+                <p className="font-medium">Session {s.session_number}: {s.focus}</p>
+                <p className="text-sm text-muted-foreground">{s.date}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Select value={current} onValueChange={(v) => updateStatus(s.id, v as SessionStatus)}>

@@ -458,10 +458,7 @@ const Curriculum = () => {
               const files = instructorFiles[session.id] || [];
               const links = instructorLinks[session.id] || [];
 
-              const outcomes = renderJsonArray(session.outcomes);
-              const topics = renderJsonArray(session.topics);
-              const agenda = renderJsonArray(session.agenda);
-              const homework = renderJsonArray(session.homework);
+              const staticSession = SESSION_CONTENT.find(s => s.sessionNumber === session.session_number);
 
               return (
                 <TabsContent
@@ -473,12 +470,12 @@ const Curriculum = () => {
                   <div className="bg-slate-50 rounded-lg border border-slate-200 p-6">
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div className="flex-1">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-2">{session.title}</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2">{staticSession?.title || session.focus}</h2>
                         <p className="text-sm text-slate-600 mb-3">
-                          <strong>Theme:</strong> {session.theme}
+                          <strong>Theme:</strong> {staticSession?.theme || session.focus}
                         </p>
-                        {session.theme_description && (
-                          <p className="text-sm text-slate-700 italic">{session.theme_description}</p>
+                        {staticSession?.themeDescription && (
+                          <p className="text-sm text-slate-700 italic">{staticSession.themeDescription}</p>
                         )}
                       </div>
                       <div className="flex flex-col items-end gap-2">
